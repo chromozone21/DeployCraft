@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Runner copié temporairement sur chaque PC cible.
+    Cible .NET Framework 4.8, présent d'origine sur Windows 10/11 :
+    rien à installer sur les postes.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <!-- Restauré aussi pour win-x64 (publication du service) : le lock file reste le même dans les deux cas. -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <AssemblyName>DeployCraft.Runner</AssemblyName>
+    <RootNamespace>DeployCraft.Runner</RootNamespace>
+  </PropertyGroup>
+
+  <!-- Assemblys de référence .NET Framework 4.8 en paquet : même compilation (et même lock file) avec ou sans le pack 4.8 installé. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Runtime.Serialization" />
+  </ItemGroup>
+
+</Project>

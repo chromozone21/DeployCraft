@@ -1,0 +1,205 @@
+<UserControl x:Class="DeployCraft.Console.DeploymentsPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:DeployCraft.Console">
+    <UserControl.Resources>
+        <local:StatusTextConverter x:Key="StatusText" />
+        <local:StatusBrushConverter x:Key="StatusBrush" />
+        <local:StatusIconConverter x:Key="StatusIcon" />
+
+        <DataTemplate x:Key="StatusCell">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding Status, Converter={StaticResource StatusIcon}}" FontFamily="{StaticResource IconFont}"
+                           Foreground="{Binding Status, Converter={StaticResource StatusBrush}}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Status, Converter={StaticResource StatusText}}" VerticalAlignment="Center" />
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- Carte de détails à droite des grilles -->
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource ContentBackground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PanelBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,8" />
+        </Style>
+        <Style x:Key="CardSection" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="0,7,0,2" />
+        </Style>
+        <Style x:Key="CardLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+            <Setter Property="Margin" Value="0,1,10,1" />
+        </Style>
+        <Style x:Key="CardValue" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,1" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="FilterBox" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+            <Setter Property="Width" Value="220" />
+            <Setter Property="ToolTip" Value="Filtrer" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" MinHeight="140" />
+            <RowDefinition Height="8" />
+            <RowDefinition Height="*" MinHeight="140" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="10" />
+            <ColumnDefinition Width="320" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ======= Déploiements ======= -->
+        <DockPanel>
+            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                <TextBox x:Name="DeploymentFilter" DockPanel.Dock="Right" Style="{StaticResource FilterBox}" TextChanged="DeploymentFilter_TextChanged" />
+                <TextBlock x:Name="DeploymentsTitle" Style="{StaticResource SectionTitle}" />
+            </DockPanel>
+            <DataGrid x:Name="DeploymentsGrid" SelectionChanged="DeploymentsGrid_SelectionChanged">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="N°" Binding="{Binding Id}" Width="55" />
+                    <DataGridTemplateColumn Header="Statut" CellTemplate="{StaticResource StatusCell}" Width="110" SortMemberPath="Status" />
+                    <DataGridTextColumn x:Name="PackageColumn" Header="Paquet" Binding="{Binding PackageName}" Width="*" MinWidth="120" />
+                    <DataGridTextColumn Header="Lancé le" Binding="{Binding Created}" Width="140" SortMemberPath="CreatedUtc" />
+                    <DataGridTextColumn Header="Durée" Binding="{Binding Duration}" Width="90" />
+                    <DataGridTextColumn Header="Postes" Binding="{Binding Total}" Width="75" />
+                    <DataGridTextColumn Header="Prioritaire" Binding="{Binding Prioritized}" Width="95" />
+                    <DataGridTextColumn Header="Réussis" Binding="{Binding Ok}" Width="80" />
+                    <DataGridTextColumn Header="Échecs" Binding="{Binding Ko}" Width="75" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </DockPanel>
+
+        <Border Grid.Column="2" Style="{StaticResource Card}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <TextBlock x:Name="NoDeployment" Text="Sélectionnez un déploiement." Foreground="{DynamicResource MutedBrush}" />
+                    <StackPanel x:Name="DeploymentDetails" Visibility="Collapsed">
+                        <TextBlock Text="DÉTAILS DU DÉPLOIEMENT" Style="{StaticResource CardSection}" Margin="0,0,0,8" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock x:Name="DStatusIcon" FontFamily="{StaticResource IconFont}" FontSize="26" VerticalAlignment="Center" Margin="0,0,10,0" />
+                            <StackPanel>
+                                <TextBlock x:Name="DTitle" FontSize="16" FontWeight="SemiBold" />
+                                <TextBlock x:Name="DStatus" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <TextBlock Text="RÉSUMÉ" Style="{StaticResource CardSection}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                            </Grid.RowDefinitions>
+                            <TextBlock Style="{StaticResource CardLabel}" Text="Paquet" />
+                            <TextBlock Grid.Column="1" Style="{StaticResource CardValue}" x:Name="DPackage" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="1" Style="{StaticResource CardLabel}" Text="Lancé le" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource CardValue}" x:Name="DCreated" />
+                            <TextBlock Grid.Row="2" Style="{StaticResource CardLabel}" Text="Durée" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource CardValue}" x:Name="DDuration" />
+                            <TextBlock Grid.Row="3" Style="{StaticResource CardLabel}" Text="Lancé par" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource CardValue}" x:Name="DLaunchedBy" />
+                            <TextBlock Grid.Row="4" Style="{StaticResource CardLabel}" Text="Compte" />
+                            <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource CardValue}" x:Name="DRunAs" />
+                            <TextBlock Grid.Row="5" Style="{StaticResource CardLabel}" Text="Postes" />
+                            <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource CardValue}">
+                                <Run x:Name="DTotal" />
+                                <Hyperlink x:Name="RedeployLink" Click="RedeployAll_Click">Redéployer</Hyperlink>
+                            </TextBlock>
+                            <TextBlock Grid.Row="6" Style="{StaticResource CardLabel}" Text="Échecs" />
+                            <TextBlock Grid.Row="6" Grid.Column="1" Style="{StaticResource CardValue}">
+                                <Run x:Name="DFailed" />
+                                <Hyperlink x:Name="RetryLink" Click="RedeployFailed_Click">Relancer</Hyperlink>
+                            </TextBlock>
+                        </Grid>
+                        <TextBlock x:Name="DCounts" Foreground="{DynamicResource RunBrush}" Margin="0,6,0,0" />
+
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </Border>
+
+        <GridSplitter Grid.Row="1" Grid.ColumnSpan="3" HorizontalAlignment="Stretch" Background="Transparent" />
+
+        <!-- ======= Postes du déploiement sélectionné ======= -->
+        <DockPanel Grid.Row="2">
+            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                <TextBox x:Name="TargetFilter" DockPanel.Dock="Right" Style="{StaticResource FilterBox}" TextChanged="TargetFilter_TextChanged" />
+                <TextBlock x:Name="TargetsTitle" Style="{StaticResource SectionTitle}" />
+            </DockPanel>
+            <DataGrid x:Name="TargetsGrid" SelectionMode="Extended" SelectionChanged="TargetsGrid_SelectionChanged" MouseDoubleClick="TargetsGrid_MouseDoubleClick">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Déploiement" Binding="{Binding DeploymentId}" Width="110" />
+                    <DataGridTextColumn Header="Poste" Binding="{Binding Computer}" Width="160" />
+                    <DataGridTemplateColumn Header="Statut" CellTemplate="{StaticResource StatusCell}" Width="110" SortMemberPath="Status" />
+                    <DataGridTextColumn Header="Étapes" Binding="{Binding Steps}" Width="80" />
+                    <DataGridTextColumn Header="Erreur / étape en cours" Binding="{Binding Detail}" Width="*" />
+                    <DataGridTextColumn Header="Début" Binding="{Binding Started}" Width="140" />
+                    <DataGridTextColumn Header="Durée" Binding="{Binding Duration}" Width="80" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </DockPanel>
+
+        <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource Card}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <TextBlock x:Name="NoTarget" Text="Sélectionnez un poste." Foreground="{DynamicResource MutedBrush}" />
+                    <StackPanel x:Name="TargetDetails" Visibility="Collapsed">
+                        <TextBlock Text="DÉTAILS DU POSTE" Style="{StaticResource CardSection}" Margin="0,0,0,8" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE977;" FontFamily="{StaticResource IconFont}" FontSize="26" Foreground="{DynamicResource Accent}"
+                                       VerticalAlignment="Center" Margin="0,0,10,0" />
+                            <StackPanel>
+                                <TextBlock x:Name="TName" FontSize="16" FontWeight="SemiBold" />
+                                <TextBlock x:Name="TStatus" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <TextBlock Text="RÉSUMÉ" Style="{StaticResource CardSection}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition /><RowDefinition x:Name="TCurrentRow" /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                            </Grid.RowDefinitions>
+                            <TextBlock Style="{StaticResource CardLabel}" Text="Étapes" />
+                            <TextBlock Grid.Column="1" Style="{StaticResource CardValue}">
+                                <Hyperlink Click="ShowSteps_Click"><Run x:Name="TSteps" /></Hyperlink>
+                            </TextBlock>
+                            <TextBlock Grid.Row="1" Style="{StaticResource CardLabel}" Text="En cours" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource CardValue}" x:Name="TCurrent" Foreground="{DynamicResource RunBrush}" />
+                            <TextBlock Grid.Row="2" Style="{StaticResource CardLabel}" Text="Début" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource CardValue}" x:Name="TStarted" />
+                            <TextBlock Grid.Row="3" Style="{StaticResource CardLabel}" Text="Fin" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource CardValue}" x:Name="TEnded" />
+                            <TextBlock Grid.Row="4" Style="{StaticResource CardLabel}" Text="Durée" />
+                            <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource CardValue}" x:Name="TDuration" />
+                            <TextBlock Grid.Row="5" Style="{StaticResource CardLabel}" Text="Action" />
+                            <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource CardValue}">
+                                <Hyperlink Click="RedeployTarget_Click">Redéployer sur ce poste</Hyperlink>
+                            </TextBlock>
+                        </Grid>
+
+                        <TextBlock x:Name="TErrorTitle" Text="ERREUR" Style="{StaticResource CardSection}" />
+                        <TextBlock x:Name="TError" TextWrapping="Wrap" Foreground="{DynamicResource KoBrush}" />
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

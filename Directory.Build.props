@@ -1,0 +1,11 @@
+<Project>
+
+  <!-- Réglages communs à tous les projets. -->
+  <PropertyGroup>
+    <!-- Versions des dépendances figées dans packages.lock.json (commité) : même build partout. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <!-- Le CI restaure en mode verrouillé : un lock file pas à jour fait échouer la compilation. -->
+    <RestoreLockedMode Condition="'$(CI)' == 'true'">true</RestoreLockedMode>
+  </PropertyGroup>
+
+</Project>

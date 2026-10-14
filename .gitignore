@@ -1,0 +1,38 @@
+# Compilation
+bin/
+obj/
+publish/
+dist/
+build/
+TestResults/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Secrets et environnement (ne jamais commiter)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+
+# Données locales (bases de test, journaux)
+*.db
+*.db-shm
+*.db-wal
+*.log
+
+# Dépendances d'autres outils
+node_modules/
+__pycache__/
+
+# Système
+.DS_Store
+Thumbs.db
+
+# Local
+.claude/

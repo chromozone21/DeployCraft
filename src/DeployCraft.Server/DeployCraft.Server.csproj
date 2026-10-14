@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- Publié en win-x64 autonome (build.ps1) : le lock file inclut ce runtime. -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>DeployCraft.Server</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.13" />
+    <PackageReference Include="System.DirectoryServices" Version="10.0.13" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DeployCraft.Tests" />
+  </ItemGroup>
+
+  <!-- Le runner (net48) est compilé avant le serveur puis copié dans runner\ à côté du serveur. -->
+  <ItemGroup>
+    <ProjectReference Include="..\DeployCraft.Runner\DeployCraft.Runner.csproj"
+                      ReferenceOutputAssembly="false"
+                      SkipGetTargetFrameworkProperties="true" />
+  </ItemGroup>
+
+  <Target Name="CopyRunner" AfterTargets="Build;Publish">
+    <ItemGroup>
+      <RunnerFiles Include="..\DeployCraft.Runner\bin\$(Configuration)\net48\DeployCraft.Runner.exe;..\DeployCraft.Runner\bin\$(Configuration)\net48\DeployCraft.Runner.exe.config" />
+    </ItemGroup>
+    <Copy SourceFiles="@(RunnerFiles)" DestinationFolder="$(OutDir)runner" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(RunnerFiles)" DestinationFolder="$(PublishDir)runner" SkipUnchangedFiles="true" Condition="'$(PublishDir)' != ''" />
+  </Target>
+
+</Project>

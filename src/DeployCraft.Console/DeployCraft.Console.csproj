@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Console DeployCraft : l'application fenêtrée qui pilote le service DeployCraft. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- Publié en win-x64 autonome (build.ps1) : le lock file inclut ce runtime. -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>DeployCraft</AssemblyName>
+    <RootNamespace>DeployCraft.Console</RootNamespace>
+  </PropertyGroup>
+
+  <!-- Même modèle de données que le service. -->
+  <ItemGroup>
+    <Compile Include="..\DeployCraft.Server\Data\Models.cs" Link="Shared\Models.cs" />
+    <Compile Include="..\DeployCraft.Server\Data\TriggerCalendar.cs" Link="Shared\TriggerCalendar.cs" />
+  </ItemGroup>
+
+</Project>

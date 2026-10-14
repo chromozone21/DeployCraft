@@ -1,0 +1,39 @@
+# Vérifie chaque PR et chaque fusion dans main : restauration verrouillée (packages.lock.json),
+# compilation, tests, mise en forme. Windows obligatoire (WPF, service Windows, runner .NET Framework).
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restauration (mode verrouillé)
+        run: dotnet restore DeployCraft.slnx
+
+      - name: Compilation
+        run: dotnet build DeployCraft.slnx --no-restore -c Release -warnaserror
+
+      - name: Tests
+        run: dotnet test DeployCraft.slnx --no-build -c Release
+
+      - name: Mise en forme
+        run: dotnet format DeployCraft.slnx --verify-no-changes --no-restore
