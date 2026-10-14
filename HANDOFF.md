@@ -17,21 +17,22 @@ suivant qu'une fois qu'il a tout validé**.
 Les informations propres à l'environnement du mainteneur (serveurs, postes de test, comptes) sont dans ses notes
 **hors du dépôt** : ne jamais les recopier ici.
 
-## Dernier sujet : identifiants multiples (0.9.0)
+## Dernier sujet : identifiants multiples (0.9.0, 0.9.1) — validé par le mainteneur
 
 Options › Identifiants (ajouter, modifier, par défaut, supprimer, tester), choix de l'identifiant dans Déployer une
 fois et les planifications, comptes locaux, dossier de données réservé aux administrateurs. Détail : `SPEC.md`
-§ « Identifiants (0.9.0) ». Testé avec des comptes fictifs (30 tests automatiques + instance isolée) ; validation
-avec de vrais comptes en cours chez le mainteneur.
+§ « Identifiants (0.9.0) ». 0.9.1 : « .\ » reconnu comme compte local, Tester un compte local sur un poste choisi.
+Validé par le mainteneur avec ses vrais comptes ; 38 tests automatiques.
 
 Gestion du dépôt (15/10) : `main` protégée (PR + CI obligatoires), règles des sessions du mainteneur dans `CLAUDE.md`.
-**Sujet suivant décidé : authentification de l'API du service (PARITE 8.10).**
+
+**Sujet en cours : authentification de l'API du service (PARITE 8.10, issue #5).** Aujourd'hui l'API
+(`localhost:5080`) n'a pas d'authentification : un utilisateur ouvert sur le serveur pourrait lancer un déploiement.
 
 Autres sujets possibles : fenêtre paquet à onglets (`SPEC.md` § « Fenêtre paquet »), LAPS, listes de cibles,
-onglet Hors ligne de Déployer une fois. À traiter aussi : l'API du service (`localhost:5080`) n'a pas
-d'authentification ; un utilisateur ouvert sur le serveur pourrait lancer un déploiement (PARITE 8.10).
+onglet Hors ligne de Déployer une fois.
 
-## Version actuelle : 0.9.0
+## Version actuelle : 0.9.1
 
 - Paquets multi-étapes (Installer / Commande / PowerShell), codes de succès, délai, comportement en cas d'erreur,
   exécuter en tant que et mode de copie par paquet
@@ -39,7 +40,7 @@ d'authentification ; un utilisateur ouvert sur le serveur pourrait lancer un dé
 - Suivi maître / détail (déploiements, postes, étapes avec sortie), colonne Prioritaire
 - Annuler, Redéployer, Redéployer sur les postes en échec, Reprendre à l'étape en échec
 - Menus Fichier / Édition / Options / Aide avec raccourcis clavier, clic droit partout
-- Identifiants multiples (0.9.0)
+- Identifiants multiples (0.9.0), comptes locaux « .\ » et test sur un poste (0.9.1)
 - Thème clair / sombre / selon Windows (Préférences › Interface)
 - Planifications : déclencheurs, historique des cibles, réessai en boucle jusqu'à réussite (0.8.0)
 - Pas encore de file de réessai automatique ; le réessai passe par une planification à intervalle
