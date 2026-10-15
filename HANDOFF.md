@@ -43,7 +43,7 @@ version ni de release côté Cloud) :
   succès, poste réussi). Pas vu par Prod : le rendu visuel (grisé, thèmes), à regarder à l'installation.
 - **B — 2.25 Pause (#17, PR #18)** : fusionnée. Type `pause` + champ `seconds` ; le runner attend sans lancer
   de processus (`StepSequence.Wait`).
-- **Correctif trouvé par Prod pendant les tests de B** : en relecture. `status.json` remplacé par le runner
+- **Correctif trouvé par Prod pendant les tests de B (PR #19)** : fusionné. `status.json` remplacé par le runner
   pendant que le serveur le lit → l'écriture échouait et coupait les étapes restantes. Désormais : réessais
   d'écriture (runner) et de lecture partagée (serveur), et un enregistrement raté n'arrête plus les étapes.
   Annulation : l'étape interrompue passe en échec « Annulé. » au lieu de rester « en cours ».
