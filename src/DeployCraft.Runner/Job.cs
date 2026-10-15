@@ -55,6 +55,10 @@ namespace DeployCraft.Runner
         [DataMember(Name = "successCodes")] public List<int> SuccessCodes { get; set; } = new List<int> { 0 };
         [DataMember(Name = "timeoutSeconds")] public int TimeoutSeconds { get; set; } = 3600;
         [DataMember(Name = "continueOnError")] public bool ContinueOnError { get; set; }
+        /// <summary>En cas d'échec : arrêter le paquet et compter le poste réussi (prime sur continueOnError).</summary>
+        [DataMember(Name = "stopSuccessOnError")] public bool StopSuccessOnError { get; set; }
+        /// <summary>Étape désactivée : jamais exécutée, notée « skipped ».</summary>
+        [DataMember(Name = "disabled")] public bool Disabled { get; set; }
         /// <summary>Lancer l'étape dans la session de l'utilisateur connecté (le runner tourne en Système).</summary>
         [DataMember(Name = "runAsLoggedOnUser")] public bool RunAsLoggedOnUser { get; set; }
         /// <summary>Mode pull : fichier (UNC) à copier dans exec\ avant l'étape, avec l'identité du runner.</summary>
@@ -79,7 +83,7 @@ namespace DeployCraft.Runner
     public class StepResult
     {
         [DataMember(Name = "name")] public string Name { get; set; }
-        /// <summary>running | success | failed | skipped</summary>
+        /// <summary>running | success | failed | skipped | stopped (échec avec arrêt en succès)</summary>
         [DataMember(Name = "state")] public string State { get; set; }
         [DataMember(Name = "exitCode")] public int? ExitCode { get; set; }
         [DataMember(Name = "commandLine")] public string CommandLine { get; set; }

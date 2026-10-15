@@ -31,6 +31,7 @@ public static class Ui
         "Failed" or "failed" => "Échec",
         "Partial" => "Partiel",
         "skipped" => "Ignoré",
+        "stopped" => "Arrêt en succès",
         _ => status,
     };
 
@@ -41,12 +42,13 @@ public static class Ui
         "Partial" => "",                 // avertissement
         "Running" or "running" => "",    // synchro
         "skipped" => "",                 // ignoré
+        "stopped" => "",                 // coche (arrêt compté réussi)
         _ => "",                         // horloge (en attente)
     };
 
     public static Brush StatusBrush(string status) => status switch
     {
-        "Successful" or "success" => (Brush)Application.Current.Resources["OkBrush"],
+        "Successful" or "success" or "stopped" => (Brush)Application.Current.Resources["OkBrush"],
         "Failed" or "failed" => (Brush)Application.Current.Resources["KoBrush"],
         "Partial" => (Brush)Application.Current.Resources["Accent"],
         "Running" or "running" => (Brush)Application.Current.Resources["RunBrush"],

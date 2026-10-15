@@ -154,20 +154,10 @@ internal sealed class TargetSession(string computer, DeployCredentials credentia
         var job = new RunnerJob { Conditions = RunnerConditions.From(package.Conditions) };
         foreach (var step in package.Steps.Skip(Math.Max(0, startStep - 1)))
         {
-            var jobStep = new RunnerJobStep
-            {
-                Name = string.IsNullOrWhiteSpace(step.Name) ? step.Type.ToString() : step.Name,
-                Type = step.Type.ToString().ToLowerInvariant(),
-                Arguments = step.Arguments,
-                Command = step.Command,
-                SuccessCodes = ParseCodes(step.SuccessCodes),
-                TimeoutSeconds = Math.Max(1, step.TimeoutMinutes ?? package.TimeoutMinutes ?? 60) * 60,
-                ContinueOnError = step.ErrorMode == ErrorMode.Continue,
-                RunAsLoggedOnUser = runAs == RunAsMode.LoggedOnUser,
-                Conditions = RunnerConditions.From(step.Conditions),
-            };
+            var jobStep = ToJobStep(step, package, runAs);
 
-            if (step.Type == StepType.Install)
+            // Étape désactivée : transmise pour apparaître « Ignoré », mais aucun fichier n'est copié ni vérifié.
+            if (step.Type == StepType.Install && step.Enabled)
             {
                 if (string.IsNullOrWhiteSpace(step.File)) throw new DeployException($"Étape « {jobStep.Name} » : aucun fichier d'installation.");
                 jobStep.Command = Path.GetFileName(step.File);
@@ -190,6 +180,22 @@ internal sealed class TargetSession(string computer, DeployCredentials credentia
         File.WriteAllText(Path.Combine(SlotDir, "job.json"), JsonSerializer.Serialize(job));
         return job;
     }
+
+    /// <summary>Consignes d'une étape pour le runner (hors fichiers à copier).</summary>
+    internal static RunnerJobStep ToJobStep(PackageStep step, Package package, RunAsMode runAs) => new()
+    {
+        Name = string.IsNullOrWhiteSpace(step.Name) ? step.Type.ToString() : step.Name,
+        Type = step.Type.ToString().ToLowerInvariant(),
+        Arguments = step.Arguments,
+        Command = step.Command,
+        SuccessCodes = ParseCodes(step.SuccessCodes),
+        TimeoutSeconds = Math.Max(1, step.TimeoutMinutes ?? package.TimeoutMinutes ?? 60) * 60,
+        ContinueOnError = step.ErrorMode == ErrorMode.Continue,
+        StopSuccessOnError = step.ErrorMode == ErrorMode.StopSuccess,
+        Disabled = !step.Enabled,
+        RunAsLoggedOnUser = runAs == RunAsMode.LoggedOnUser,
+        Conditions = RunnerConditions.From(step.Conditions),
+    };
 
     /// <summary>Réserve un slot libre grâce à un fichier verrou créé de façon exclusive.</summary>
     private void AcquireSlot()

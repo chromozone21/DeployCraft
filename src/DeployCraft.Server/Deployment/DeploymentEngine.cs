@@ -232,11 +232,7 @@ public class DeploymentEngine(Store store, DeployCredentials credentials, ILogge
                 }
             }
 
-            var failed = target.Steps.FirstOrDefault(s => s.State == "failed");
-            target.Status = failed == null && target.Steps.Count > 0 ? TargetStatus.Successful : TargetStatus.Failed;
-            if (failed != null) target.Error = ErrorMessages.ForStep(failed);
-            // Conditions du paquet non remplies : rien d'exécuté, la raison s'affiche dans le suivi.
-            else if (target.Steps.Count > 0 && target.Steps.All(s => s.State == "skipped")) target.Error = target.Steps[0].Error;
+            (target.Status, target.Error) = Outcome(target.Steps);
         }
         catch (OperationCanceledException) when (cts.IsCancellationRequested && !appStopping.IsCancellationRequested)
         {
@@ -293,6 +289,19 @@ public class DeploymentEngine(Store store, DeployCredentials credentials, ILogge
             if (await TargetSession.ProbeAsync(target.Computer, ct) == null) return;
         }
         throw new DeployException($"{target.Computer} ne répond toujours pas {Math.Max(1, waitMinutes)} min après le réveil (Wake-on-LAN désactivé sur le poste, ou poste débranché ?).") { Offline = true };
+    }
+
+    /// <summary>
+    /// Résultat d'un poste d'après ses étapes : une étape en échec le met en échec. Arrêt en succès, ou toutes les
+    /// étapes ignorées (conditions du paquet non remplies…) : poste réussi, avec la raison dans le détail.
+    /// </summary>
+    internal static (TargetStatus Status, string? Error) Outcome(List<StepOutcome> steps)
+    {
+        if (steps.FirstOrDefault(s => s.State == "failed") is { } failed) return (TargetStatus.Failed, ErrorMessages.ForStep(failed));
+        if (steps.Count == 0) return (TargetStatus.Failed, null);
+        if (steps.FirstOrDefault(s => s.State == "stopped") is { } stopped)
+            return (TargetStatus.Successful, "Arrêt en succès demandé en cas d'erreur. " + ErrorMessages.ForStep(stopped));
+        return (TargetStatus.Successful, steps.All(s => s.State == "skipped") ? steps[0].Error : null);
     }
 
     private static List<StepOutcome> ToOutcomes(RunnerStatus status) =>

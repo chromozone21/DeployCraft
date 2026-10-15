@@ -21,6 +21,10 @@ public class RunnerJobStep
     [JsonPropertyName("successCodes")] public List<int> SuccessCodes { get; set; } = [0];
     [JsonPropertyName("timeoutSeconds")] public int TimeoutSeconds { get; set; }
     [JsonPropertyName("continueOnError")] public bool ContinueOnError { get; set; }
+    /// <summary>En cas d'échec : arrêter le paquet et compter le poste réussi (prime sur continueOnError).</summary>
+    [JsonPropertyName("stopSuccessOnError")] public bool StopSuccessOnError { get; set; }
+    /// <summary>Étape désactivée : jamais exécutée, notée « skipped ».</summary>
+    [JsonPropertyName("disabled")] public bool Disabled { get; set; }
     /// <summary>Lancer l'étape dans la session de l'utilisateur connecté (le runner tourne en Système).</summary>
     [JsonPropertyName("runAsLoggedOnUser")] public bool RunAsLoggedOnUser { get; set; }
     /// <summary>Mode pull : fichier (UNC) que le runner copie lui-même dans exec avant l'étape.</summary>

@@ -89,10 +89,14 @@ public partial class PackageWindow : Window
         UpdateButtons();
     }
 
-    private static StackPanel StepHeader(PackageStep step, int index) =>
-        Ui.Header(Ui.StepIcon(step.Type), string.IsNullOrWhiteSpace(step.Name)
+    private static StackPanel StepHeader(PackageStep step, int index)
+    {
+        var header = Ui.Header(Ui.StepIcon(step.Type), (string.IsNullOrWhiteSpace(step.Name)
             ? $"Étape {index + 1} ({MainWindow.StepTypeText(step.Type)})"
-            : $"{index + 1}. {step.Name}");
+            : $"{index + 1}. {step.Name}") + (step.Enabled ? "" : " (désactivée)"));
+        if (!step.Enabled) header.Opacity = 0.55;
+        return header;
+    }
 
     private void Tree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
     {
@@ -110,7 +114,7 @@ public partial class PackageWindow : Window
 
     private void ShowStepsOverview()
     {
-        StepsGrid.ItemsSource = Package.Steps.Select((s, i) => new PackageStepRow(i + 1, s.Name, MainWindow.StepTypeText(s.Type),
+        StepsGrid.ItemsSource = Package.Steps.Select((s, i) => new PackageStepRow(i + 1, MainWindow.StepName(s), MainWindow.StepTypeText(s.Type),
             s.Conditions.IsEmpty ? "" : "Oui",
             s.Type switch
             {
@@ -156,6 +160,7 @@ public partial class PackageWindow : Window
                 new("Couper", () => { SelectStep(step); Cut_Click(this, new()); }, Gesture: "Ctrl+X"),
                 new("Copier", () => { SelectStep(step); Copy_Click(this, new()); }, Gesture: "Ctrl+C"),
                 new("Dupliquer", () => { SelectStep(step); Duplicate_Click(this, new()); }),
+                new(step.Enabled ? "Désactiver" : "Activer", () => SetEnabled(step, !step.Enabled)),
                 Ui.Separator,
                 new("Monter", () => { SelectStep(step); Move(-1); }, i > 0),
                 new("Descendre", () => { SelectStep(step); Move(1); }, i < Package.Steps.Count - 1),
@@ -212,7 +217,8 @@ public partial class PackageWindow : Window
 
         StepConditions.Load(step.Conditions, forPackage: false);
         StepTimeoutHint.Text = $"Vide : délai du paquet ({PackageTimeout} min). Au-delà, le processus est arrêté et l'étape échoue.";
-        ErrorModeBox.SelectedIndex = step.ErrorMode == ErrorMode.Continue ? 1 : 0;
+        ErrorModeBox.SelectedIndex = (int)step.ErrorMode;
+        UpdateErrorModeHint(step);
         UpdateSilentHint();
         _loadingStep = false;
     }
@@ -250,8 +256,31 @@ public partial class PackageWindow : Window
 
     private void ErrorMode_Changed(object sender, SelectionChangedEventArgs e)
     {
-        if (!_loadingStep && SelectedStep is { } step)
-            step.ErrorMode = ErrorModeBox.SelectedIndex == 1 ? ErrorMode.Continue : ErrorMode.Stop;
+        if (_loadingStep || SelectedStep is not { } step || ErrorModeBox.SelectedIndex < 0) return;
+        step.ErrorMode = (ErrorMode)ErrorModeBox.SelectedIndex;
+        UpdateErrorModeHint(step);
+    }
+
+    private void UpdateErrorModeHint(PackageStep step) => ErrorModeHint.Text = step.ErrorMode switch
+    {
+        ErrorMode.Continue => "L'étape est notée en échec (le poste aussi), mais les étapes suivantes s'exécutent.",
+        ErrorMode.StopSuccess => "Les étapes suivantes ne s'exécutent pas et le poste est compté réussi " +
+                                 "(utile quand l'échec veut dire « rien à faire » sur ce poste).",
+        _ => "Les étapes suivantes ne s'exécutent pas et le poste est en échec.",
+    };
+
+    private void StepEnabled_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedStep != null) StepName_TextChanged(this, null!);
+    }
+
+    private void SetEnabled(PackageStep step, bool enabled)
+    {
+        step.Enabled = enabled;
+        foreach (TreeViewItem node in _stepsNode.Items)
+            if (node.Tag == step) node.Header = StepHeader(step, Package.Steps.IndexOf(step));
+        if (StepView.DataContext == step) StepEnabledBox.IsChecked = enabled;
+        if (StepsOverview.Visibility == Visibility.Visible) ShowStepsOverview();
     }
 
     private void Browse_Click(object sender, RoutedEventArgs e)

@@ -137,8 +137,16 @@
                         <ColumnDefinition Width="130" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
                     <TextBlock Style="{StaticResource FieldLabel}" Text="Titre de l'étape" />
                     <TextBox Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" TextChanged="StepName_TextChanged" />
+                    <CheckBox Grid.Row="1" Grid.Column="1" x:Name="StepEnabledBox" Margin="0,8,0,0" Content="Étape activée"
+                              AutomationProperties.Name="Étape activée"
+                              ToolTip="Décochée : l'étape reste dans le paquet mais n'est pas exécutée (« Ignoré » dans le suivi)."
+                              IsChecked="{Binding Enabled}" Click="StepEnabled_Click" />
                 </Grid>
 
                 <TabControl x:Name="StepTabs">
@@ -207,10 +215,13 @@
                                      Text="{Binding TimeoutMinutes, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />
                             <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource Hint}" x:Name="StepTimeoutHint" />
                             <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="En cas d'erreur" />
-                            <ComboBox Grid.Row="2" Grid.Column="1" x:Name="ErrorModeBox" SelectionChanged="ErrorMode_Changed">
+                            <ComboBox Grid.Row="2" Grid.Column="1" x:Name="ErrorModeBox" SelectionChanged="ErrorMode_Changed"
+                                      AutomationProperties.Name="En cas d'erreur">
                                 <ComboBoxItem Content="Arrêter le déploiement" />
                                 <ComboBoxItem Content="Continuer" />
+                                <ComboBoxItem Content="Arrêter en succès" />
                             </ComboBox>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource Hint}" x:Name="ErrorModeHint" />
                         </Grid>
                     </TabItem>
                 </TabControl>
