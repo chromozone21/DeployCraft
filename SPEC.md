@@ -97,7 +97,8 @@
 3. Il crée un **service Windows temporaire** `DeployCraftRunner-N` et le démarre (sous l'identifiant choisi ou en
    Système local).
 4. Le runner exécute les étapes dans l'ordre, écrit `status.json` après chaque changement ; le serveur le relit
-   chaque seconde pour l'affichage en direct.
+   chaque seconde pour l'affichage en direct (lecture partagée, sans bloquer le runner). Un enregistrement raté
+   (fichier en cours de lecture) est réessayé puis rattrapé au suivant : il n'interrompt jamais les étapes.
 5. Fin : le serveur compare chaque code de sortie aux codes de succès, puis arrête et supprime le service et le
    slot. Seul `last-runner.log` reste.
 

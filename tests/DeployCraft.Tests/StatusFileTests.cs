@@ -1,0 +1,85 @@
+using DeployCraft.Runner;
+using DeployCraft.Server.Data;
+using DeployCraft.Server.Deployment;
+using DeployCraft.Server.Remote;
+
+namespace DeployCraft.Tests;
+
+/// <summary>status.json lu par le serveur pendant que le runner le remplace, et étape interrompue par une annulation.</summary>
+public sealed class StatusFileTests : IDisposable
+{
+    private readonly string _dir = Directory.CreateTempSubdirectory("dc-tests-").FullName;
+
+    public void Dispose() => Directory.Delete(_dir, recursive: true);
+
+    private sealed class NoFacts : ITargetFacts
+    {
+        public string WindowsFamily => "11";
+        public bool Is64Bit => true;
+        public int PowerShellVersion => 5;
+        public bool UserLoggedOn => false;
+        public bool PathExists(string path) => false;
+        public bool RegistryExists(string key, string value) => false;
+    }
+
+    [Fact]
+    public void Retry_GoesOnAfterALockedFile_AndGivesUpAfterTheLastAttempt()
+    {
+        var calls = 0;
+        Json.Retry(() => { if (++calls < 3) throw new IOException("verrouillé"); }, 10, _ => { });
+        Assert.Equal(3, calls);
+
+        calls = 0;
+        Assert.Throws<IOException>(() => Json.Retry(() => { calls++; throw new IOException("verrouillé"); }, 4, _ => { }));
+        Assert.Equal(4, calls);
+    }
+
+    [Fact]
+    public void FailedSave_NeverStopsTheRemainingSteps()
+    {
+        var ran = new List<string>();
+        var logs = new List<string>();
+        var status = new RunStatus();
+
+        StepSequence.Run(new Job { Steps = [new JobStep { Name = "a" }, new JobStep { Name = "b" }, new JobStep { Name = "c" }] },
+            new NoFacts(), status,
+            (_, step, result) => { ran.Add(step.Name); result.State = StepSequence.Success; },
+            save: () => throw new IOException("status.json utilisé par un autre processus"),
+            aborted: () => false, log: logs.Add);
+
+        Assert.Equal(["a", "b", "c"], ran);
+        Assert.All(status.Steps, s => Assert.Equal("success", s.State));
+        Assert.Contains(logs, l => l.StartsWith("Enregistrement de l'avancement impossible"));
+    }
+
+    [Fact]
+    public void ReadStatus_WorksWhileTheRunnerHoldsTheFile_AndSkipsAHalfWrittenOne()
+    {
+        var path = Path.Combine(_dir, "status.json");
+        File.WriteAllText(path, """{"state":"done","steps":[{"name":"a","state":"success"}]}""");
+        using (new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete))
+            Assert.Equal("done", TargetSession.ReadStatus(path)!.State);
+
+        File.WriteAllText(path, """{"state":"run""");
+        Assert.Null(TargetSession.ReadStatus(path));
+        Assert.Null(TargetSession.ReadStatus(Path.Combine(_dir, "absent.json")));
+    }
+
+    [Fact]
+    public void Abort_EndsTheInterruptedStep()
+    {
+        var now = new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+        var steps = new List<StepOutcome>
+        {
+            new() { Name = "a", State = "success", EndedUtc = now.AddMinutes(-1) },
+            new() { Name = "b", State = "running" },
+        };
+
+        DeploymentEngine.MarkAborted(steps, now);
+
+        Assert.Equal("success", steps[0].State);
+        Assert.Equal("failed", steps[1].State);
+        Assert.Equal("Annulé.", steps[1].Error);
+        Assert.Equal(now, steps[1].EndedUtc);
+    }
+}

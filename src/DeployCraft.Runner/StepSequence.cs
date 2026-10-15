@@ -19,6 +19,19 @@ namespace DeployCraft.Runner
         public static void Run(Job job, ITargetFacts facts, RunStatus status,
             Action<int, JobStep, StepResult> runStep, Action save, Func<bool> aborted, Action<string> log)
         {
+            // Un avancement non enregistré se rattrape au prochain : il ne doit jamais interrompre les étapes.
+            void Save()
+            {
+                try
+                {
+                    save();
+                }
+                catch (Exception ex)
+                {
+                    log("Enregistrement de l'avancement impossible : " + ex.Message);
+                }
+            }
+
             // Conditions du paquet non remplies : toutes les étapes sont sautées, sans échec.
             var packageSkip = Unmet(job.Conditions, facts, out var packageError);
             if (packageSkip != null) log("Conditions du paquet non remplies : " + packageSkip);
@@ -68,7 +81,7 @@ namespace DeployCraft.Runner
 
                 if (result.State == Running)
                 {
-                    save();
+                    Save();
                     runStep(i, step, result);
                 }
                 result.EndedUtc = Json.Now();
@@ -83,7 +96,7 @@ namespace DeployCraft.Runner
 
                 log($"Étape {i + 1} « {step.Name} » : {result.State}" +
                     (result.Error != null ? $" ({result.Error})" : result.ExitCode != null ? $" (code {result.ExitCode})" : ""));
-                save();
+                Save();
             }
         }
 

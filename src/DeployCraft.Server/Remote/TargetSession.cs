@@ -218,15 +218,29 @@ internal sealed class TargetSession(string computer, DeployCredentials credentia
         throw new DeployException($"Trop de déploiements simultanés sur ce poste ({MaxSlots}).");
     }
 
-    private static RunnerStatus? ReadStatus(string path)
+    /// <summary>
+    /// Lit status.json sans bloquer le runner (qui le remplace à chaque changement) ; réessaie un peu si le fichier
+    /// est verrouillé ou à moitié écrit, sinon null : on relira au prochain tour.
+    /// </summary>
+    internal static RunnerStatus? ReadStatus(string path)
     {
-        try
+        for (var attempt = 1; ; attempt++)
         {
-            return File.Exists(path) ? JsonSerializer.Deserialize<RunnerStatus>(File.ReadAllText(path)) : null;
-        }
-        catch (Exception ex) when (ex is IOException or JsonException)
-        {
-            return null; // fichier en cours de remplacement : on relira au prochain tour
+            try
+            {
+                if (!File.Exists(path)) return null;
+                using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using var reader = new StreamReader(stream);
+                return JsonSerializer.Deserialize<RunnerStatus>(reader.ReadToEnd());
+            }
+            catch (Exception ex) when (ex is IOException or JsonException && attempt < 3)
+            {
+                Thread.Sleep(200);
+            }
+            catch (Exception ex) when (ex is IOException or JsonException)
+            {
+                return null;
+            }
         }
     }
 

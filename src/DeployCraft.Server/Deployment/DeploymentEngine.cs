@@ -240,6 +240,7 @@ public class DeploymentEngine(Store store, DeployCredentials credentials, ILogge
             target.Status = TargetStatus.Failed;
             _abortedBy.TryRemove(target.Id, out var by);
             target.Error = string.IsNullOrEmpty(by) ? "Annulé." : $"Annulé par {by}.";
+            MarkAborted(target.Steps, DateTime.UtcNow);
         }
         catch (Exception ex)
         {
@@ -302,6 +303,17 @@ public class DeploymentEngine(Store store, DeployCredentials credentials, ILogge
         if (steps.FirstOrDefault(s => s.State == "stopped") is { } stopped)
             return (TargetStatus.Successful, "Arrêt en succès demandé en cas d'erreur. " + ErrorMessages.ForStep(stopped));
         return (TargetStatus.Successful, steps.All(s => s.State == "skipped") ? steps[0].Error : null);
+    }
+
+    /// <summary>Annulation : l'étape interrompue (encore « en cours ») passe en échec « Annulé. », avec une date de fin.</summary>
+    internal static void MarkAborted(List<StepOutcome> steps, DateTime nowUtc)
+    {
+        foreach (var step in steps.Where(s => s.State == "running"))
+        {
+            step.State = "failed";
+            step.Error ??= "Annulé.";
+            step.EndedUtc ??= nowUtc;
+        }
     }
 
     private static List<StepOutcome> ToOutcomes(RunnerStatus status) =>
