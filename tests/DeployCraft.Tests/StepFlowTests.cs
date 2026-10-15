@@ -5,7 +5,7 @@ using DeployCraft.Server.Remote;
 
 namespace DeployCraft.Tests;
 
-/// <summary>Étapes désactivées et « arrêter en succès » : consignes du serveur, enchaînement par le runner, résultat du poste.</summary>
+/// <summary>Étapes désactivées, « arrêter en succès » et pause : consignes du serveur, enchaînement par le runner, résultat du poste.</summary>
 public sealed class StepFlowTests : IDisposable
 {
     private readonly string _dir = Directory.CreateTempSubdirectory("dc-tests-").FullName;
@@ -115,6 +115,41 @@ public sealed class StepFlowTests : IDisposable
         Assert.True(disabled.Disabled);
         Assert.True(disabled.ContinueOnError);
         Assert.False(disabled.StopSuccessOnError);
+    }
+
+    [Fact]
+    public void Pause_WaitsTheWholeDuration_InShortSlices()
+    {
+        var slept = new List<int>();
+
+        Assert.True(StepSequence.Wait(2, () => false, slept.Add));
+        Assert.Equal(2000, slept.Sum());
+        Assert.All(slept, ms => Assert.InRange(ms, 1, 500));
+    }
+
+    [Fact]
+    public void Pause_StopsAsSoonAsTheDeploymentIsAborted()
+    {
+        var slept = 0;
+
+        Assert.False(StepSequence.Wait(3600, () => slept >= 1000, ms => slept += ms));
+        Assert.Equal(1000, slept);
+    }
+
+    [Fact]
+    public void JobStep_CarriesThePauseDuration_OnlyForAPause()
+    {
+        var package = new Package();
+
+        var pause = TargetSession.ToJobStep(new PackageStep { Type = StepType.Pause, PauseSeconds = 45 }, package, RunAsMode.DeployUser);
+        Assert.Equal("pause", pause.Type);
+        Assert.Equal(45, pause.Seconds);
+
+        // Pause plus longue que le délai de l'étape : le serveur ne doit pas abandonner le poste pendant l'attente.
+        var longPause = TargetSession.ToJobStep(new PackageStep { Type = StepType.Pause, PauseSeconds = 7200, TimeoutMinutes = 60 }, package, RunAsMode.DeployUser);
+        Assert.True(longPause.TimeoutSeconds > 7200);
+
+        Assert.Equal(0, TargetSession.ToJobStep(new PackageStep { Type = StepType.Command, PauseSeconds = 45 }, package, RunAsMode.DeployUser).Seconds);
     }
 
     private static StepOutcome Step(string state, string? error = null, int? code = null) =>

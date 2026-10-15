@@ -31,7 +31,7 @@
 | PowerShell | Script PowerShell |
 | Copie de fichiers *(à venir)* | Copier des fichiers / dossiers vers la cible |
 | Redémarrer *(à venir)* | Redémarrer et attendre le retour du poste |
-| Pause *(à venir)* | Attendre N secondes |
+| Pause | Attendre N secondes (1 s à 24 h) sur le poste avant l'étape suivante ; rien n'est lancé, pas de code de succès ; l'attente s'arrête si le déploiement est annulé |
 | Message *(à venir)* | Afficher un message à l'utilisateur connecté |
 | Déconnexion *(à venir)* | Déconnecter l'utilisateur |
 | Paquet imbriqué *(à venir)* | Exécuter un autre paquet (détection des boucles) |

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace DeployCraft.Runner
 {
@@ -70,6 +71,18 @@ namespace DeployCraft.Runner
 
         private void RunStep(int index, JobStep step, StepResult result)
         {
+            if (step.Type == "pause")
+            {
+                result.CommandLine = $"Pause de {step.Seconds} s";
+                if (StepSequence.Wait(step.Seconds, () => _aborted, Thread.Sleep)) result.State = "success";
+                else
+                {
+                    result.State = "failed";
+                    result.Error = "Annulé.";
+                }
+                return;
+            }
+
             ProcessStartInfo psi;
             try
             {

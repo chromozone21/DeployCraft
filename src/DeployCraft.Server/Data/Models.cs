@@ -1,6 +1,6 @@
 namespace DeployCraft.Server.Data;
 
-public enum StepType { Install, Command, PowerShell }
+public enum StepType { Install, Command, PowerShell, Pause }
 
 /// <summary>En cas d'erreur d'une étape : arrêter en échec, continuer, ou arrêter le paquet en comptant le poste réussi.</summary>
 public enum ErrorMode { Stop, Continue, StopSuccess }
@@ -34,6 +34,8 @@ public class PackageStep
     /// <summary>Command : ligne cmd. PowerShell : contenu du script.</summary>
     public string? Command { get; set; }
     public string SuccessCodes { get; set; } = Defaults.SuccessCodes;
+    /// <summary>Pause : durée d'attente sur le poste, en secondes.</summary>
+    public int PauseSeconds { get; set; } = 30;
     /// <summary>Délai max de l'étape (null = celui du paquet, sinon celui des Préférences).</summary>
     public int? TimeoutMinutes { get; set; }
     public ErrorMode ErrorMode { get; set; } = ErrorMode.Stop;

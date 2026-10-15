@@ -38,10 +38,12 @@ Gestion du dépôt (15/10) : `main` protégée (PR + CI obligatoires), un sujet 
 
 Programme, une PR par sujet, chacune relue et testée sous Windows par DeployCraft Prod avant fusion (pas de
 version ni de release côté Cloud) :
-- **A — 2.6 étape activée / désactivée + 2.7 arrêter en succès (issue #15)** : codé, en relecture.
-  Enchaînement des étapes du runner sorti dans `Runner/StepSequence.cs`, testé sous Linux (état `stopped` =
-  échec avec arrêt en succès, poste réussi).
-- B — 2.25 Pause ; C — 2.5 sections avant / principales / après ; D — 2.28 paquet imbriqué ; E — 8.2 variables.
+- **A — 2.6 étape activée / désactivée + 2.7 arrêter en succès (#15, PR #16)** : fusionnée. Enchaînement des
+  étapes du runner sorti dans `Runner/StepSequence.cs`, testé sous Linux (état `stopped` = échec avec arrêt en
+  succès, poste réussi). Pas vu par Prod : le rendu visuel (grisé, thèmes), à regarder à l'installation.
+- **B — 2.25 Pause (#17)** : codée, en relecture. Type `pause` + champ `seconds` ; le runner attend sans lancer
+  de processus (`StepSequence.Wait`).
+- C — 2.5 sections avant / principales / après ; D — 2.28 paquet imbriqué ; E — 8.2 variables.
 - Ensuite : 2.8, 2.23, 2.24, 2.26, 2.27, 2.20–2.22 (à tester sur un vrai poste).
 - Import des paquets PDQ Deploy (#14) : en attente, après ces sujets.
 

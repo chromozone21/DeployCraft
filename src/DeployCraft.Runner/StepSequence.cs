@@ -87,6 +87,17 @@ namespace DeployCraft.Runner
             }
         }
 
+        /// <summary>Attend <paramref name="seconds"/> secondes par tranches courtes ; false si le déploiement est annulé entre-temps.</summary>
+        public static bool Wait(int seconds, Func<bool> aborted, Action<int> sleep)
+        {
+            for (var left = Math.Max(0, seconds) * 1000; left > 0; left -= 500)
+            {
+                if (aborted()) return false;
+                sleep(Math.Min(500, left));
+            }
+            return !aborted();
+        }
+
         /// <summary>
         /// Raison pour laquelle les conditions ne sont pas remplies (null = remplies).
         /// Une condition impossible à vérifier (clé de registre mal écrite…) est une erreur, rendue dans <paramref name="error"/>.
