@@ -357,11 +357,7 @@ public partial class MainWindow : Window
         PackageSubtitle.Text = string.IsNullOrWhiteSpace(p.Description)
             ? $"Paquet · {steps} · modifié le {Ui.LocalTime(p.ModifiedUtc)}"
             : $"{p.Description} · {steps} · modifié le {Ui.LocalTime(p.ModifiedUtc)}";
-        StepsGrid.ItemsSource = p.Steps.Select((s, i) => new StepRow(i + 1, StepName(s), StepTypeText(s.Type), s.Type switch
-        {
-            StepType.Install => $"{s.File} {s.Arguments}".Trim(),
-            _ => (s.Command ?? "").Split('\n')[0].Trim(),
-        })).ToList();
+        StepsGrid.ItemsSource = p.Steps.Select((s, i) => new StepRow(i + 1, StepName(s), StepTypeText(s.Type), StepDetails(s))).ToList();
         PackageDeployments.SetDeployments([]);
         PackageSchedulesGrid.ItemsSource = null;
         PackageSchedulesCount.Text = "";
@@ -371,10 +367,19 @@ public partial class MainWindow : Window
     /// <summary>Titre de l'étape, signalée si elle est désactivée.</summary>
     public static string StepName(PackageStep s) => s.Enabled ? s.Name : $"{s.Name} (désactivée)";
 
+    /// <summary>Résumé d'une étape pour les listes : fichier, première ligne de commande, durée de pause.</summary>
+    public static string StepDetails(PackageStep s) => s.Type switch
+    {
+        StepType.Install => $"{s.File} {s.Arguments}".Trim(),
+        StepType.Pause => $"{s.PauseSeconds} s",
+        _ => (s.Command ?? "").Split('\n')[0].Trim(),
+    };
+
     public static string StepTypeText(StepType t) => t switch
     {
         StepType.Install => "Installer",
         StepType.Command => "Commande",
+        StepType.Pause => "Pause",
         _ => "PowerShell",
     };
 

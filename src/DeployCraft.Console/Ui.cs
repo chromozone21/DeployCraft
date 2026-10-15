@@ -18,6 +18,7 @@ public static class Ui
     public const string IconInstall = "";
     public const string IconCommand = "";
     public const string IconScript = "";
+    public const string IconPause = ""; // chronomètre
     public const string IconComputer = "";
     public const string IconProperties = "";
     public const string IconSteps = "";
@@ -85,6 +86,7 @@ public static class Ui
     {
         Server.Data.StepType.Install => IconInstall,
         Server.Data.StepType.Command => IconCommand,
+        Server.Data.StepType.Pause => IconPause,
         _ => IconScript,
     };
 

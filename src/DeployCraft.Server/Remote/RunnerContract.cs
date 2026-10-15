@@ -18,6 +18,8 @@ public class RunnerJobStep
     [JsonPropertyName("type")] public string Type { get; set; } = "";
     [JsonPropertyName("command")] public string? Command { get; set; }
     [JsonPropertyName("arguments")] public string? Arguments { get; set; }
+    /// <summary>pause : durée d'attente en secondes.</summary>
+    [JsonPropertyName("seconds")] public int Seconds { get; set; }
     [JsonPropertyName("successCodes")] public List<int> SuccessCodes { get; set; } = [0];
     [JsonPropertyName("timeoutSeconds")] public int TimeoutSeconds { get; set; }
     [JsonPropertyName("continueOnError")] public bool ContinueOnError { get; set; }

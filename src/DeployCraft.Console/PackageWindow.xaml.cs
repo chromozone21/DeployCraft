@@ -116,11 +116,7 @@ public partial class PackageWindow : Window
     {
         StepsGrid.ItemsSource = Package.Steps.Select((s, i) => new PackageStepRow(i + 1, MainWindow.StepName(s), MainWindow.StepTypeText(s.Type),
             s.Conditions.IsEmpty ? "" : "Oui",
-            s.Type switch
-            {
-                StepType.Install => $"{s.File} {s.Arguments}".Trim(),
-                _ => (s.Command ?? "").Split('\n')[0].Trim(),
-            })).ToList();
+            MainWindow.StepDetails(s))).ToList();
         ShowOnly(StepsOverview);
     }
 
@@ -147,6 +143,7 @@ public partial class PackageWindow : Window
             new("Nouvelle étape : Installer", () => AddInstall_Click(this, new())),
             new("Nouvelle étape : Commande", () => AddCommand_Click(this, new())),
             new("Nouvelle étape : PowerShell", () => AddPowerShell_Click(this, new())),
+            new("Nouvelle étape : Pause", () => AddPause_Click(this, new())),
             Ui.Separator,
             new("Coller", () => Paste_Click(this, new()), CanPaste, "Ctrl+V"),
         ];
@@ -208,15 +205,22 @@ public partial class PackageWindow : Window
         ShowOnly(StepView);
 
         var install = step.Type == StepType.Install;
+        var pause = step.Type == StepType.Pause;
         foreach (UIElement el in new UIElement[] { FileLabel, FileBox, BrowseButton, FileHint, ArgsLabel, ArgsBox, SilentHint, IncludeDirBox })
             el.Visibility = install ? Visibility.Visible : Visibility.Collapsed;
-        CommandLabel.Visibility = CommandBox.Visibility = install ? Visibility.Collapsed : Visibility.Visible;
+        CommandLabel.Visibility = CommandBox.Visibility = install || pause ? Visibility.Collapsed : Visibility.Visible;
+        foreach (UIElement el in new UIElement[] { PauseLabel, PauseBox, PauseHint })
+            el.Visibility = pause ? Visibility.Visible : Visibility.Collapsed;
+        foreach (UIElement el in new UIElement[] { CodesLabel, CodesBox, CodesHint })
+            el.Visibility = pause ? Visibility.Collapsed : Visibility.Visible;
         CommandLabel.Text = step.Type == StepType.PowerShell ? "Script" : "Commande";
         CommandBox.MinHeight = step.Type == StepType.PowerShell ? 220 : 26;
         CommandBox.TextWrapping = step.Type == StepType.PowerShell ? TextWrapping.NoWrap : TextWrapping.Wrap;
 
         StepConditions.Load(step.Conditions, forPackage: false);
-        StepTimeoutHint.Text = $"Vide : délai du paquet ({PackageTimeout} min). Au-delà, le processus est arrêté et l'étape échoue.";
+        StepTimeoutHint.Text = pause
+            ? "Sans effet sur une pause : elle dure toujours la durée choisie."
+            : $"Vide : délai du paquet ({PackageTimeout} min). Au-delà, le processus est arrêté et l'étape échoue.";
         ErrorModeBox.SelectedIndex = (int)step.ErrorMode;
         UpdateErrorModeHint(step);
         UpdateSilentHint();
@@ -386,6 +390,7 @@ public partial class PackageWindow : Window
     private void AddInstall_Click(object sender, RoutedEventArgs e) => AddStep(NewStep(StepType.Install));
     private void AddCommand_Click(object sender, RoutedEventArgs e) => AddStep(NewStep(StepType.Command));
     private void AddPowerShell_Click(object sender, RoutedEventArgs e) => AddStep(NewStep(StepType.PowerShell));
+    private void AddPause_Click(object sender, RoutedEventArgs e) => AddStep(NewStep(StepType.Pause));
 
     private void AddStep(PackageStep step)
     {

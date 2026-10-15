@@ -304,6 +304,8 @@ static string? Validate(Package p)
                 return $"{label} : choisissez le fichier d'installation.";
             case StepType.Command or StepType.PowerShell when string.IsNullOrWhiteSpace(s.Command):
                 return $"{label} : la commande est vide.";
+            case StepType.Pause when s.PauseSeconds is < 1 or > 86400:
+                return $"{label} : la pause doit durer de 1 seconde à 24 heures (86 400 secondes).";
         }
         if (s.TimeoutMinutes is < 1) return $"{label} : le délai max doit être d'au moins 1 minute.";
         if (ValidateConditions(s.Conditions) is { } error) return $"{label}, conditions : {error}";

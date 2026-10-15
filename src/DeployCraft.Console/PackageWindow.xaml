@@ -17,6 +17,7 @@
                             <MenuItem Header="Installer" Click="AddInstall_Click" />
                             <MenuItem Header="Commande" Click="AddCommand_Click" />
                             <MenuItem Header="PowerShell" Click="AddPowerShell_Click" />
+                            <MenuItem Header="Pause" Click="AddPause_Click" />
                         </ContextMenu>
                     </Button.ContextMenu>
                 </Button>
@@ -118,6 +119,7 @@
                     <Button Style="{StaticResource DialogButton}" Click="AddInstall_Click">Installer</Button>
                     <Button Style="{StaticResource DialogButton}" Click="AddCommand_Click">Commande</Button>
                     <Button Style="{StaticResource DialogButton}" Click="AddPowerShell_Click">PowerShell</Button>
+                    <Button Style="{StaticResource DialogButton}" Click="AddPause_Click">Pause</Button>
                 </StackPanel>
                 <DataGrid x:Name="StepsGrid" MouseDoubleClick="StepsGrid_MouseDoubleClick">
                     <DataGrid.Columns>
@@ -188,9 +190,17 @@
                                      Text="{Binding Command, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas"
                                      AcceptsReturn="True" AcceptsTab="True" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" Margin="0,0,0,10" />
 
-                            <TextBlock Grid.Row="6" Style="{StaticResource FieldLabel}" Text="Codes de succès" />
-                            <TextBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding SuccessCodes, UpdateSourceTrigger=PropertyChanged}" />
-                            <TextBlock Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource Hint}"
+                            <!-- Pause -->
+                            <TextBlock x:Name="PauseLabel" Style="{StaticResource FieldLabel}" Text="Durée (secondes)" />
+                            <TextBox x:Name="PauseBox" Grid.Column="1" Style="{StaticResource CompactBox}" HorizontalAlignment="Left" Width="90"
+                                     AutomationProperties.Name="Durée (secondes)"
+                                     Text="{Binding PauseSeconds, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock x:Name="PauseHint" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource Hint}"
+                                       Text="Le poste attend avant l'étape suivante (1 seconde à 24 heures). Rien n'est lancé sur le poste." />
+
+                            <TextBlock x:Name="CodesLabel" Grid.Row="6" Style="{StaticResource FieldLabel}" Text="Codes de succès" />
+                            <TextBox x:Name="CodesBox" Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding SuccessCodes, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock x:Name="CodesHint" Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource Hint}"
                                        Text="Codes retour considérés comme une réussite, séparés par des virgules." />
                         </Grid>
                     </TabItem>

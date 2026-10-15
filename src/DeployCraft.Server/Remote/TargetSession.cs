@@ -188,8 +188,12 @@ internal sealed class TargetSession(string computer, DeployCredentials credentia
         Type = step.Type.ToString().ToLowerInvariant(),
         Arguments = step.Arguments,
         Command = step.Command,
+        Seconds = step.Type == StepType.Pause ? step.PauseSeconds : 0,
         SuccessCodes = ParseCodes(step.SuccessCodes),
-        TimeoutSeconds = Math.Max(1, step.TimeoutMinutes ?? package.TimeoutMinutes ?? 60) * 60,
+        // Une pause dure ce qu'elle dure : son délai (qui compte dans l'attente du serveur) suit sa durée.
+        TimeoutSeconds = step.Type == StepType.Pause
+            ? Math.Max(1, step.PauseSeconds) + 60
+            : Math.Max(1, step.TimeoutMinutes ?? package.TimeoutMinutes ?? 60) * 60,
         ContinueOnError = step.ErrorMode == ErrorMode.Continue,
         StopSuccessOnError = step.ErrorMode == ErrorMode.StopSuccess,
         Disabled = !step.Enabled,

@@ -47,11 +47,13 @@ namespace DeployCraft.Runner
     public class JobStep
     {
         [DataMember(Name = "name")] public string Name { get; set; }
-        /// <summary>install | command | powershell</summary>
+        /// <summary>install | command | powershell | pause</summary>
         [DataMember(Name = "type")] public string Type { get; set; }
         /// <summary>install : nom du fichier dans exec\. command : ligne cmd. powershell : script.</summary>
         [DataMember(Name = "command")] public string Command { get; set; }
         [DataMember(Name = "arguments")] public string Arguments { get; set; }
+        /// <summary>pause : durée d'attente en secondes.</summary>
+        [DataMember(Name = "seconds")] public int Seconds { get; set; }
         [DataMember(Name = "successCodes")] public List<int> SuccessCodes { get; set; } = new List<int> { 0 };
         [DataMember(Name = "timeoutSeconds")] public int TimeoutSeconds { get; set; } = 3600;
         [DataMember(Name = "continueOnError")] public bool ContinueOnError { get; set; }
