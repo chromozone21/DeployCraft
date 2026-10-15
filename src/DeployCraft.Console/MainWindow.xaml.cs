@@ -364,8 +364,15 @@ public partial class MainWindow : Window
         SwitchTo(View.Package);
     }
 
-    /// <summary>Titre de l'étape, signalée si elle est désactivée.</summary>
-    public static string StepName(PackageStep s) => s.Enabled ? s.Name : $"{s.Name} (désactivée)";
+    /// <summary>Titre de l'étape, précédé de sa section (sauf Principales) et signalée si elle est désactivée.</summary>
+    public static string StepName(PackageStep s) => SectionPrefix(s.Section) + (s.Enabled ? s.Name : $"{s.Name} (désactivée)");
+
+    public static string SectionPrefix(StepSection section) => section switch
+    {
+        StepSection.Before => "Avant · ",
+        StepSection.After => "Après · ",
+        _ => "",
+    };
 
     /// <summary>Résumé d'une étape pour les listes : fichier, première ligne de commande, durée de pause.</summary>
     public static string StepDetails(PackageStep s) => s.Type switch
