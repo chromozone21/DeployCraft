@@ -93,6 +93,14 @@ d'abord lequel au mainteneur.
    `dotnet format DeployCraft.slnx --verify-no-changes` passent.
 4. Message de commit conforme aux règles ci-dessus.
 
+## Session dans le cloud (Linux)
+
+`.claude/hooks/session-start.sh` installe le SDK .NET 10 au démarrage et active `EnableWindowsTargeting` :
+build, tests et `dotnet format` se lancent comme ci-dessus. Les tests qui utilisent des fonctions propres à
+Windows (`CredentialsTests` : chiffrement, droits du dossier ; `File_ExpandsEnvironmentVariables`) y échouent
+avec `PlatformNotSupportedException` ou équivalent : c'est attendu, la CI Windows fait foi. Rien ne se lance ici
+(ni service, ni console, ni déploiement).
+
 ## Fin de session
 
 Mettre à jour `HANDOFF.md` (sur la branche du sujet en cours, jamais directement sur `main`).
