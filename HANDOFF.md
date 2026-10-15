@@ -53,16 +53,16 @@ version ni de release côté Cloud) :
   pendant que le serveur le lit → l'écriture échouait et coupait les étapes restantes. Désormais : réessais
   d'écriture (runner) et de lecture partagée (serveur), et un enregistrement raté n'arrête plus les étapes.
   Annulation : l'étape interrompue passe en échec « Annulé. » au lieu de rester « en cours ».
-- **C — 2.5 sections avant / principales / après (PR #21)** : fusionnée. Règle (la nôtre, à faire confirmer par
-  la session du mainteneur qui observe l'outil de référence) dans `SPEC.md` § Sections. Les étapes sont rangées
-  par section à l'enregistrement (`Package.SortSteps`).
+- **C — 2.5 sections avant / principales / après (PR #21)** : fusionnée en 0.11.0, puis **retirée** à la demande du
+  mainteneur (un échec doit arrêter net le paquet ; branche `refactor/retirer-sections`). Les paquets enregistrés
+  en 0.11.0 gardent leur ordre, le champ « section » est ignoré à la lecture.
 - **D — 2.28 paquet imbriqué (PR #26)** : fusionné. `Package.Flatten` remplace les étapes « paquet imbriqué »
   au lancement (dans `Resolve`) ; conditions héritées dans `ExtraConditions` / `extraConditions`. « Arrêter le
   déploiement » renommé « Arrêter en échec ».
 - **Retours du mainteneur sur la 0.10.0 (PR #27)** : fusionnée. « REMARQUE » (couleur atténuée) au lieu de
   « ERREUR » rouge pour un poste réussi, « Raison : » pour une étape ignorée, colonnes élargies, boîte
   `MessageDialog` aux couleurs du thème (plus aucun `MessageBox.Show`). **Version 0.11.0 publiée** par Prod.
-- **E — 8.2 variables (PR #30, branche `feat/variables`)** : en relecture par Prod. Serveur, runner, API
+- **E — 8.2 variables (PR #30)** : fusionnée. Serveur, runner, API
   `/variables`, `Store.Variables.cs` (Store en `partial`), `Data/VariableText.cs` (partagé avec la console),
   `VariablesPage` (onglet Préférences › Variables ; à la fermeture des Préférences, « enregistrer ? » Oui / Non /
   Annuler via `MessageDialog`) et 15 tests.
