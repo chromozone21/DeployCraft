@@ -34,5 +34,7 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Local
-.claude/
+# Local (sauf le démarrage des sessions cloud, partagé)
+.claude/*
+!.claude/settings.json
+!.claude/hooks/

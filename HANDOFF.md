@@ -58,6 +58,8 @@ Chaque version est publiée dans les **Releases** GitHub avec son installeur (ta
 
 ## Notes techniques
 
+- Sessions Claude Code dans le cloud (Linux) : .NET installé au démarrage, build / tests / format possibles
+  (sauf tests propres à Windows), voir `CLAUDE.md` § « Session dans le cloud ».
 - Tester sans toucher aux vraies données : `dotnet run --project src\DeployCraft.Server -- --Urls http://localhost:5091 --DataDir <dossier>` et lancer la console avec `DEPLOYCRAFT_URL=http://localhost:5091`.
 - Ne fermer que ses propres fenêtres de test (par PID), jamais toutes les instances DeployCraft.
 - Windows PowerShell 5.1 : enregistrer les scripts `.ps1` en UTF-8 **avec BOM** (sinon les accents cassent).
