@@ -1,0 +1,2 @@
+# Scripts shell toujours en fin de ligne LF : sinon ils cassent sous Linux (sessions cloud).
+*.sh text eol=lf
