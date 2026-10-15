@@ -87,6 +87,7 @@ public static class Ui
         Server.Data.StepType.Install => IconInstall,
         Server.Data.StepType.Command => IconCommand,
         Server.Data.StepType.Pause => IconPause,
+        Server.Data.StepType.Nested => IconPackage,
         _ => IconScript,
     };
 

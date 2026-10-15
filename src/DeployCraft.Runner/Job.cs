@@ -36,6 +36,14 @@ namespace DeployCraft.Runner
         [DataMember(Name = "registryExists")] public bool? RegistryExists { get; set; }
     }
 
+    /// <summary>Conditions héritées (paquet imbriqué), avec leur origine pour expliquer une étape ignorée.</summary>
+    [DataContract]
+    public class JobConditionGroup
+    {
+        [DataMember(Name = "label")] public string Label { get; set; }
+        [DataMember(Name = "conditions")] public JobConditions Conditions { get; set; }
+    }
+
     [DataContract]
     public class NetworkCard
     {
@@ -70,6 +78,8 @@ namespace DeployCraft.Runner
         [DataMember(Name = "includeDirectory")] public bool IncludeDirectory { get; set; }
         /// <summary>Conditions de l'étape : non remplies, l'étape est sautée.</summary>
         [DataMember(Name = "conditions")] public JobConditions Conditions { get; set; }
+        /// <summary>Conditions supplémentaires (paquet imbriqué), vérifiées avant celles de l'étape (null = aucune).</summary>
+        [DataMember(Name = "extraConditions")] public List<JobConditionGroup> ExtraConditions { get; set; }
     }
 
     [DataContract]

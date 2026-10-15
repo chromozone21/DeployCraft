@@ -22,6 +22,8 @@ public partial class PackageWindow : Window
     private bool _loadingOptions;
     /// <summary>Valeurs des Préférences, affichées pour les réglages laissés « par défaut ».</summary>
     private DeploymentDefaults _defaults = new();
+    /// <summary>Paquets du service : choix d'un paquet imbriqué et résumé des étapes.</summary>
+    private List<Package> _library = [];
 
     /// <summary>Paquet tel qu'enregistré en dernier (valide si <see cref="Saved"/>).</summary>
     public Package Package { get; private set; }
@@ -59,6 +61,7 @@ public partial class PackageWindow : Window
             try
             {
                 _defaults = await Api.Defaults();
+                _library = await Api.Packages();
                 FillOptions();
                 if (SelectedStep is { } step) ShowStep(step);
             }
@@ -116,7 +119,7 @@ public partial class PackageWindow : Window
     {
         StepsGrid.ItemsSource = Package.Steps.Select((s, i) => new PackageStepRow(i + 1, MainWindow.StepName(s), MainWindow.StepTypeText(s.Type),
             s.Conditions.IsEmpty ? "" : "Oui",
-            MainWindow.StepDetails(s))).ToList();
+            MainWindow.StepDetails(s, FindPackage))).ToList();
         ShowOnly(StepsOverview);
     }
 
@@ -144,6 +147,7 @@ public partial class PackageWindow : Window
             new("Nouvelle étape : Commande", () => AddCommand_Click(this, new())),
             new("Nouvelle étape : PowerShell", () => AddPowerShell_Click(this, new())),
             new("Nouvelle étape : Pause", () => AddPause_Click(this, new())),
+            new("Nouvelle étape : Paquet imbriqué", () => AddNested_Click(this, new())),
             Ui.Separator,
             new("Coller", () => Paste_Click(this, new()), CanPaste, "Ctrl+V"),
         ];
@@ -204,21 +208,30 @@ public partial class PackageWindow : Window
 
         var install = step.Type == StepType.Install;
         var pause = step.Type == StepType.Pause;
+        var nested = step.Type == StepType.Nested;
         foreach (UIElement el in new UIElement[] { FileLabel, FileBox, BrowseButton, FileHint, ArgsLabel, ArgsBox, SilentHint, IncludeDirBox })
             el.Visibility = install ? Visibility.Visible : Visibility.Collapsed;
-        CommandLabel.Visibility = CommandBox.Visibility = install || pause ? Visibility.Collapsed : Visibility.Visible;
+        CommandLabel.Visibility = CommandBox.Visibility = install || pause || nested ? Visibility.Collapsed : Visibility.Visible;
+        foreach (UIElement el in new UIElement[] { NestedLabel, NestedBox, NestedHint })
+            el.Visibility = nested ? Visibility.Visible : Visibility.Collapsed;
+        if (nested)
+        {
+            NestedBox.ItemsSource = _library.Where(p => p.Id != Package.Id).OrderBy(p => p.Name).ToList();
+            NestedBox.SelectedValue = step.NestedPackageId;
+        }
         foreach (UIElement el in new UIElement[] { PauseLabel, PauseBox, PauseHint })
             el.Visibility = pause ? Visibility.Visible : Visibility.Collapsed;
         foreach (UIElement el in new UIElement[] { CodesLabel, CodesBox, CodesHint })
-            el.Visibility = pause ? Visibility.Collapsed : Visibility.Visible;
+            el.Visibility = pause || nested ? Visibility.Collapsed : Visibility.Visible;
         CommandLabel.Text = step.Type == StepType.PowerShell ? "Script" : "Commande";
         CommandBox.MinHeight = step.Type == StepType.PowerShell ? 220 : 26;
         CommandBox.TextWrapping = step.Type == StepType.PowerShell ? TextWrapping.NoWrap : TextWrapping.Wrap;
 
         StepConditions.Load(step.Conditions, forPackage: false);
-        StepTimeoutHint.Text = pause
-            ? "Sans effet sur une pause : elle dure toujours la durée choisie."
+        StepTimeoutHint.Text = pause ? "Sans effet sur une pause : elle dure toujours la durée choisie."
+            : nested ? "Sans effet : chaque étape du paquet imbriqué garde son délai (sinon celui du paquet imbriqué)."
             : $"Vide : délai du paquet ({PackageTimeout} min). Au-delà, le processus est arrêté et l'étape échoue.";
+        StepTimeoutBox.IsEnabled = ErrorModeBox.IsEnabled = !nested;
         ErrorModeBox.SelectedIndex = (int)step.ErrorMode;
         SectionBox.SelectedIndex = Array.IndexOf(SectionOrder, step.Section);
         UpdateSectionHint(step);
@@ -265,13 +278,15 @@ public partial class PackageWindow : Window
         UpdateErrorModeHint(step);
     }
 
-    private void UpdateErrorModeHint(PackageStep step) => ErrorModeHint.Text = step.ErrorMode switch
-    {
-        ErrorMode.Continue => "L'étape est notée en échec (le poste aussi), mais les étapes suivantes s'exécutent.",
-        ErrorMode.StopSuccess => "Les étapes suivantes ne s'exécutent pas et le poste est compté réussi " +
-                                 "(utile quand l'échec veut dire « rien à faire » sur ce poste).",
-        _ => "Les étapes suivantes ne s'exécutent pas et le poste est en échec.",
-    };
+    private void UpdateErrorModeHint(PackageStep step) => ErrorModeHint.Text = step.Type == StepType.Nested
+        ? "Sans effet : chaque étape du paquet imbriqué garde son propre comportement en cas d'erreur."
+        : step.ErrorMode switch
+        {
+            ErrorMode.Continue => "L'étape est notée en échec (le poste aussi), mais les étapes suivantes s'exécutent.",
+            ErrorMode.StopSuccess => "Les étapes suivantes ne s'exécutent pas (sauf la section Après) et le poste est compté " +
+                                     "réussi : utile quand l'échec veut dire « rien à faire » sur ce poste.",
+            _ => "Les étapes suivantes ne s'exécutent pas (sauf la section Après) et le poste est en échec.",
+        };
 
     /// <summary>Sections dans l'ordre de la liste (et d'exécution).</summary>
     private static readonly StepSection[] SectionOrder = [StepSection.Before, StepSection.Main, StepSection.After];
@@ -411,6 +426,16 @@ public partial class PackageWindow : Window
     private void AddCommand_Click(object sender, RoutedEventArgs e) => AddStep(NewStep(StepType.Command));
     private void AddPowerShell_Click(object sender, RoutedEventArgs e) => AddStep(NewStep(StepType.PowerShell));
     private void AddPause_Click(object sender, RoutedEventArgs e) => AddStep(NewStep(StepType.Pause));
+    private void AddNested_Click(object sender, RoutedEventArgs e) => AddStep(NewStep(StepType.Nested));
+
+    private Package? FindPackage(long id) => _library.FirstOrDefault(p => p.Id == id);
+
+    private void Nested_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loadingStep || SelectedStep is not { Type: StepType.Nested } step || NestedBox.SelectedItem is not Package nested) return;
+        step.NestedPackageId = nested.Id;
+        StepName_TextChanged(this, null!);
+    }
 
     private void AddStep(PackageStep step)
     {

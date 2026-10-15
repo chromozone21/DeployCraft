@@ -39,8 +39,10 @@ public class DeploymentEngine(Store store, DeployCredentials credentials, ILogge
         if (packages.Count == 0) throw new ArgumentException("Aucun paquet.");
         foreach (var p in packages.Where(p => p.Steps.Count == 0))
             throw new ArgumentException($"Le paquet « {p.Name} » n'a aucune étape.");
-        foreach (var t in requests.Where(t => t.StartStep < 1 || t.StartStep > packages[0].Steps.Count))
-            throw new ArgumentException($"{t.Computer} : étape de départ invalide ({t.StartStep}) ; le paquet a {packages[0].Steps.Count} étape(s).");
+        // L'étape de départ se compte sur la liste déployée, paquets imbriqués remplacés par leurs étapes.
+        var stepCount = packages[0].Flatten(store.GetPackage).Steps.Count;
+        foreach (var t in requests.Where(t => t.StartStep < 1 || t.StartStep > stepCount))
+            throw new ArgumentException($"{t.Computer} : étape de départ invalide ({t.StartStep}) ; le paquet a {stepCount} étape(s).");
 
         return StartPlan(
             packages.Select((p, i) => (p, i == 0 ? requests : requests.Select(t => t with { StartStep = 1 }).ToList())).ToList(),
@@ -64,8 +66,9 @@ public class DeploymentEngine(Store store, DeployCredentials credentials, ILogge
         var previous = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
         foreach (var (original, packageTargets) in plan.Where(p => p.Targets.Count > 0))
         {
-            // Réglages « par défaut » remplacés par ceux des Préférences, figés dans l'historique du déploiement.
-            var package = original.Resolve(defaults);
+            // Réglages « par défaut » remplacés par ceux des Préférences et paquets imbriqués remplacés par leurs
+            // étapes : figés dans l'historique du déploiement.
+            var package = original.Resolve(defaults, store.GetPackage);
             var runAs = options.RunAs ?? package.RunAs!.Value;
             // Sans identifiant, le service ne peut tourner que sous un compte intégré.
             if (runAs == RunAsMode.DeployUser && credential == null) runAs = RunAsMode.LocalSystem;

@@ -18,6 +18,7 @@
                             <MenuItem Header="Commande" Click="AddCommand_Click" />
                             <MenuItem Header="PowerShell" Click="AddPowerShell_Click" />
                             <MenuItem Header="Pause" Click="AddPause_Click" />
+                            <MenuItem Header="Paquet imbriqué" Click="AddNested_Click" />
                         </ContextMenu>
                     </Button.ContextMenu>
                 </Button>
@@ -120,6 +121,7 @@
                     <Button Style="{StaticResource DialogButton}" Click="AddCommand_Click">Commande</Button>
                     <Button Style="{StaticResource DialogButton}" Click="AddPowerShell_Click">PowerShell</Button>
                     <Button Style="{StaticResource DialogButton}" Click="AddPause_Click">Pause</Button>
+                    <Button Style="{StaticResource DialogButton}" Click="AddNested_Click">Paquet imbriqué</Button>
                 </StackPanel>
                 <DataGrid x:Name="StepsGrid" MouseDoubleClick="StepsGrid_MouseDoubleClick">
                     <DataGrid.Columns>
@@ -208,6 +210,13 @@
                             <TextBlock x:Name="PauseHint" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource Hint}"
                                        Text="Le poste attend avant l'étape suivante (1 seconde à 24 heures). Rien n'est lancé sur le poste." />
 
+                            <!-- Paquet imbriqué -->
+                            <TextBlock x:Name="NestedLabel" Style="{StaticResource FieldLabel}" Text="Paquet" />
+                            <ComboBox x:Name="NestedBox" Grid.Column="1" Grid.ColumnSpan="2" DisplayMemberPath="Name" SelectedValuePath="Id"
+                                      AutomationProperties.Name="Paquet imbriqué" SelectionChanged="Nested_Changed" />
+                            <TextBlock x:Name="NestedHint" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource Hint}" TextWrapping="Wrap"
+                                       Text="Au lancement, ses étapes prennent la place de celle-ci (même section), avec les conditions de cette étape et du paquet choisi. Chaque étape garde son délai et son comportement en cas d'erreur." />
+
                             <TextBlock x:Name="CodesLabel" Grid.Row="6" Style="{StaticResource FieldLabel}" Text="Codes de succès" />
                             <TextBox x:Name="CodesBox" Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding SuccessCodes, UpdateSourceTrigger=PropertyChanged}" />
                             <TextBlock x:Name="CodesHint" Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource Hint}"
@@ -237,7 +246,7 @@
                             <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="En cas d'erreur" />
                             <ComboBox Grid.Row="2" Grid.Column="1" x:Name="ErrorModeBox" SelectionChanged="ErrorMode_Changed"
                                       AutomationProperties.Name="En cas d'erreur">
-                                <ComboBoxItem Content="Arrêter le déploiement" />
+                                <ComboBoxItem Content="Arrêter en échec" />
                                 <ComboBoxItem Content="Continuer" />
                                 <ComboBoxItem Content="Arrêter en succès" />
                             </ComboBox>

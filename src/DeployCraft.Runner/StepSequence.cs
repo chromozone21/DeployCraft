@@ -71,6 +71,16 @@ namespace DeployCraft.Runner
                     result.State = Failed;
                     result.Error = packageError;
                 }
+                else if ((stepSkip = UnmetExtra(step.ExtraConditions, facts, out stepError)) != null)
+                {
+                    result.State = Skipped;
+                    result.Error = stepSkip;
+                }
+                else if (stepError != null)
+                {
+                    result.State = Failed;
+                    result.Error = stepError;
+                }
                 else if ((stepSkip = Unmet(step.Conditions, facts, out stepError)) != null)
                 {
                     result.State = Skipped;
@@ -127,6 +137,20 @@ namespace DeployCraft.Runner
                 sleep(Math.Min(500, left));
             }
             return !aborted();
+        }
+
+        /// <summary>Première condition supplémentaire non remplie, avec son origine (null = toutes remplies).</summary>
+        private static string UnmetExtra(System.Collections.Generic.List<JobConditionGroup> groups, ITargetFacts facts, out string error)
+        {
+            error = null;
+            if (groups == null) return null;
+            foreach (var group in groups)
+            {
+                var unmet = Unmet(group.Conditions, facts, out error);
+                if (error != null) return null;
+                if (unmet != null) return $"{group.Label} non remplies. {unmet}";
+            }
+            return null;
         }
 
         /// <summary>

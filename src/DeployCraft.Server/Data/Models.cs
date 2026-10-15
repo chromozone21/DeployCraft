@@ -1,6 +1,7 @@
 namespace DeployCraft.Server.Data;
 
-public enum StepType { Install, Command, PowerShell, Pause }
+/// <summary>Nested : paquet imbriqué, remplacé par ses étapes au lancement (jamais envoyé tel quel au poste).</summary>
+public enum StepType { Install, Command, PowerShell, Pause, Nested }
 
 /// <summary>En cas d'erreur d'une étape : arrêter en échec, continuer, ou arrêter le paquet en comptant le poste réussi.</summary>
 public enum ErrorMode { Stop, Continue, StopSuccess }
@@ -44,10 +45,25 @@ public class PackageStep
     public string SuccessCodes { get; set; } = Defaults.SuccessCodes;
     /// <summary>Pause : durée d'attente sur le poste, en secondes.</summary>
     public int PauseSeconds { get; set; } = 30;
+    /// <summary>Paquet imbriqué : paquet dont les étapes prennent la place de celle-ci au lancement.</summary>
+    public long? NestedPackageId { get; set; }
+    /// <summary>
+    /// Conditions à remplir en plus de celles de l'étape : posées au lancement sur les étapes d'un paquet imbriqué
+    /// (conditions de l'étape « paquet imbriqué » et du paquet imbriqué lui-même).
+    /// </summary>
+    public List<ConditionGroup>? ExtraConditions { get; set; }
     /// <summary>Délai max de l'étape (null = celui du paquet, sinon celui des Préférences).</summary>
     public int? TimeoutMinutes { get; set; }
     public ErrorMode ErrorMode { get; set; } = ErrorMode.Stop;
     /// <summary>Conditions de l'étape : non remplies sur un poste, l'étape y est sautée.</summary>
+    public Conditions Conditions { get; set; } = new();
+}
+
+/// <summary>Conditions héritées, avec leur origine pour expliquer une étape ignorée.</summary>
+public class ConditionGroup
+{
+    /// <summary>Par exemple « Conditions du paquet imbriqué « Outils » » ; suivi de « non remplies » dans le suivi.</summary>
+    public string Label { get; set; } = "";
     public Conditions Conditions { get; set; } = new();
 }
 
@@ -145,9 +161,9 @@ public class Package
     /// Copie prête à déployer : chaque réglage laissé « par défaut » prend sa valeur (étape → paquet → Préférences).
     /// L'historique du déploiement garde ainsi les valeurs réellement utilisées.
     /// </summary>
-    public Package Resolve(DeploymentDefaults defaults)
+    public Package Resolve(DeploymentDefaults defaults, Func<long, Package?>? lookup = null)
     {
-        var copy = Clone(this);
+        var copy = Flatten(lookup ?? (_ => null), defaults.TimeoutMinutes);
         copy.RunAs ??= defaults.RunAs;
         copy.CopyMode ??= defaults.CopyMode;
         copy.TimeoutMinutes ??= defaults.TimeoutMinutes;
@@ -155,6 +171,70 @@ public class Package
         foreach (var step in copy.Steps) step.TimeoutMinutes ??= copy.TimeoutMinutes;
         return copy;
     }
+
+    /// <summary>Niveaux de paquets imbriqués acceptés (un paquet qui en contient un qui en contient un…).</summary>
+    public const int MaxNestingDepth = 5;
+
+    /// <summary>
+    /// Copie où chaque étape « paquet imbriqué » est remplacée par les étapes de ce paquet : nommées « Étape › Sous-étape »,
+    /// dans la section de l'étape remplacée, désactivées si elle l'est, avec ses conditions et celles du paquet imbriqué
+    /// en conditions supplémentaires. Délai : celui de la sous-étape, sinon celui du paquet imbriqué, sinon
+    /// <paramref name="defaultTimeout"/>. Paquet introuvable, boucle ou trop de niveaux : <see cref="ArgumentException"/>.
+    /// </summary>
+    public Package Flatten(Func<long, Package?> lookup, int? defaultTimeout = null)
+    {
+        var copy = Clone(this);
+        copy.Steps = Expand(copy.Steps, lookup, defaultTimeout, [Id], 0);
+        return copy;
+    }
+
+    private static List<PackageStep> Expand(List<PackageStep> steps, Func<long, Package?> lookup, int? defaultTimeout, List<long> path, int depth)
+    {
+        var result = new List<PackageStep>();
+        foreach (var step in steps)
+        {
+            if (step.Type != StepType.Nested)
+            {
+                result.Add(step);
+                continue;
+            }
+
+            var nested = NestedPackage(step, lookup, path, depth);
+            var label = string.IsNullOrWhiteSpace(step.Name) ? nested.Name : step.Name;
+            path.Add(nested.Id);
+            var inner = Expand(Clone(nested.Steps), lookup, defaultTimeout, path, depth + 1);
+            path.RemoveAt(path.Count - 1);
+
+            foreach (var s in inner.OrderBy(s => SectionRank(s.Section)))
+            {
+                s.Name = $"{label} › {(string.IsNullOrWhiteSpace(s.Name) ? s.Type.ToString() : s.Name)}";
+                s.Section = step.Section;
+                s.Enabled = step.Enabled && s.Enabled;
+                s.TimeoutMinutes ??= nested.TimeoutMinutes ?? defaultTimeout;
+                var extras = new List<ConditionGroup>();
+                if (!step.Conditions.IsEmpty) extras.Add(new() { Label = $"Conditions de l'étape « {label} »", Conditions = step.Conditions });
+                if (!nested.Conditions.IsEmpty) extras.Add(new() { Label = $"Conditions du paquet imbriqué « {nested.Name} »", Conditions = nested.Conditions });
+                extras.AddRange(s.ExtraConditions ?? []);
+                s.ExtraConditions = extras.Count > 0 ? extras : null;
+                result.Add(s);
+            }
+        }
+        return result;
+    }
+
+    private static Package NestedPackage(PackageStep step, Func<long, Package?> lookup, List<long> path, int depth)
+    {
+        var title = string.IsNullOrWhiteSpace(step.Name) ? "paquet imbriqué" : $"« {step.Name} »";
+        if (step.NestedPackageId is not { } id) throw new ArgumentException($"Étape {title} : choisissez le paquet à imbriquer.");
+        var nested = lookup(id) ?? throw new ArgumentException($"Étape {title} : paquet imbriqué introuvable (n° {id}, supprimé ?).");
+        if (path.Contains(id)) throw new ArgumentException($"Étape {title} : boucle de paquets imbriqués (« {nested.Name} » se contient lui-même).");
+        if (depth >= MaxNestingDepth) throw new ArgumentException($"Étape {title} : trop de niveaux de paquets imbriqués ({MaxNestingDepth} au plus).");
+        return nested;
+    }
+
+    /// <summary>Paquets qui utilisent <paramref name="id"/> comme paquet imbriqué (il ne peut pas être supprimé).</summary>
+    public static List<Package> UsersOf(IEnumerable<Package> packages, long id) =>
+        [.. packages.Where(p => p.Id != id && p.Steps.Any(s => s.Type == StepType.Nested && s.NestedPackageId == id))];
 
     /// <summary>Range les étapes par section (Avant, Principales, Après) en gardant leur ordre dans chaque section.</summary>
     public void SortSteps() => Steps = [.. Steps.OrderBy(s => SectionRank(s.Section))];
