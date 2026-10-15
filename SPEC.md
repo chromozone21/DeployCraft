@@ -34,7 +34,7 @@
 | Pause | Attendre N secondes (1 s à 24 h) sur le poste avant l'étape suivante ; rien n'est lancé, pas de code de succès ; l'attente s'arrête si le déploiement est annulé |
 | Message *(à venir)* | Afficher un message à l'utilisateur connecté |
 | Déconnexion *(à venir)* | Déconnecter l'utilisateur |
-| Paquet imbriqué *(à venir)* | Exécuter un autre paquet (détection des boucles) |
+| Paquet imbriqué | Exécuter les étapes d'un autre paquet (voir § Paquet imbriqué) |
 
 ### Conditions (0.10.0, par paquet et par étape)
 - Version de Windows (10, 11, Server, antérieures ; aucune cochée = toutes), architecture (32 / 64 bits),
@@ -50,7 +50,8 @@
 - Condition impossible à vérifier (clé mal écrite…) → étape en échec avec le message.
 
 ### Gestion d'erreur (par étape)
-- **Arrêter le déploiement** (par défaut) : les étapes suivantes ne s'exécutent pas, le poste est en échec.
+- **Arrêter en échec** (par défaut) : les étapes suivantes ne s'exécutent pas (sauf la section Après), le poste est
+  en échec.
 - **Continuer** : l'étape est notée en échec (le poste aussi), les étapes suivantes s'exécutent.
 - **Arrêter en succès** : les étapes suivantes ne s'exécutent pas et le poste est compté **réussi**. Utile quand
   l'échec veut dire « rien à faire ici » (ex. un test qui sort en erreur si le logiciel est déjà à jour). L'étape
@@ -72,6 +73,27 @@ Règle propre à DeployCraft (elle n'est pas reprise d'un autre outil) :
 - Fenêtre paquet : choix **Section** sous le titre de l'étape ; les étapes Avant / Après sont préfixées
   « Avant · » / « Après · » dans les listes. Monter / descendre restent dans la section ; une étape ajoutée,
   dupliquée ou collée prend la section de l'étape sélectionnée.
+
+### Paquet imbriqué
+- Une étape « Paquet imbriqué » désigne un autre paquet (choisi dans une liste). **Au lancement**, elle est
+  remplacée par les étapes de ce paquet, figées dans l'historique : modifier le paquet imbriqué ensuite ne change
+  pas un déploiement en cours. Le suivi, le compteur et l'étape de départ comptent ces étapes une à une.
+- Étapes remplacées nommées « Étape › Sous-étape » (titre de l'étape, sinon nom du paquet imbriqué).
+- Sections : les étapes Avant / Principales / Après du paquet imbriqué restent groupées, dans cet ordre, **à la
+  place de l'étape et dans sa section** ; elles y deviennent des étapes ordinaires (un « Après » imbriqué ne
+  s'exécute donc pas toujours).
+- Conditions : chaque étape remplacée garde les siennes et reçoit en plus celles de l'étape « paquet imbriqué »
+  et celles du paquet imbriqué. Non remplies : « Ignoré », raison « Conditions du paquet imbriqué « X » non
+  remplies. … ».
+- Délai et codes de succès : ceux de chaque sous-étape (délai vide : celui du paquet imbriqué, sinon celui des
+  Préférences). Exécuter en tant que et mode de copie : ceux du déploiement. Comportement en cas d'erreur : celui
+  de chaque sous-étape ; ceux de l'étape « paquet imbriqué » sont sans effet (grisés).
+- Étape « paquet imbriqué » désactivée : toutes ses étapes sont désactivées. Une sous-étape désactivée le reste.
+- Refusé à l'enregistrement : aucun paquet choisi, paquet introuvable, boucle (« A contient B qui contient A »),
+  plus de 5 niveaux. Un paquet utilisé comme paquet imbriqué ne peut pas être supprimé (le message cite les
+  paquets qui l'utilisent).
+- « Redéployer » relit les paquets actuels (comme pour tout paquet) : un paquet imbriqué modifié depuis est pris
+  dans sa nouvelle version.
 
 ### Étape activée / désactivée
 - Une étape décochée « Étape activée » reste dans le paquet mais n'est jamais exécutée : « Ignoré », raison

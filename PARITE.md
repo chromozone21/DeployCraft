@@ -59,7 +59,7 @@ dans la même PR que le code qui la réalise.
 | 2.25 | Pause | ✅ | N secondes (1 s à 24 h), interrompue par l'annulation |
 | 2.26 | Message | ⬜ | Durée d'affichage, attendre que l'utilisateur clique |
 | 2.27 | Déconnexion de l'utilisateur | ⬜ | Message, délai |
-| 2.28 | Paquet imbriqué | ⬜ | Utiliser les conditions du paquet imbriqué, détection des boucles |
+| 2.28 | Paquet imbriqué | ✅ | Remplacé par ses étapes au lancement ; conditions combinées, boucles et plus de 5 niveaux refusés |
 | 2.29 | Scan d'inventaire | ⛔ | Dépend de PDQ Inventory |
 
 ## 3. Déployer une fois

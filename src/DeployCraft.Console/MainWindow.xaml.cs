@@ -357,7 +357,7 @@ public partial class MainWindow : Window
         PackageSubtitle.Text = string.IsNullOrWhiteSpace(p.Description)
             ? $"Paquet · {steps} · modifié le {Ui.LocalTime(p.ModifiedUtc)}"
             : $"{p.Description} · {steps} · modifié le {Ui.LocalTime(p.ModifiedUtc)}";
-        StepsGrid.ItemsSource = p.Steps.Select((s, i) => new StepRow(i + 1, StepName(s), StepTypeText(s.Type), StepDetails(s))).ToList();
+        StepsGrid.ItemsSource = p.Steps.Select((s, i) => new StepRow(i + 1, StepName(s), StepTypeText(s.Type), StepDetails(s, FindPackage))).ToList();
         PackageDeployments.SetDeployments([]);
         PackageSchedulesGrid.ItemsSource = null;
         PackageSchedulesCount.Text = "";
@@ -374,11 +374,16 @@ public partial class MainWindow : Window
         _ => "",
     };
 
-    /// <summary>Résumé d'une étape pour les listes : fichier, première ligne de commande, durée de pause.</summary>
-    public static string StepDetails(PackageStep s) => s.Type switch
+    private Package? FindPackage(long id) => _packages.FirstOrDefault(p => p.Id == id);
+
+    /// <summary>Résumé d'une étape pour les listes : fichier, première ligne de commande, durée de pause, paquet imbriqué.</summary>
+    public static string StepDetails(PackageStep s, Func<long, Package?> lookup) => s.Type switch
     {
         StepType.Install => $"{s.File} {s.Arguments}".Trim(),
         StepType.Pause => $"{s.PauseSeconds} s",
+        StepType.Nested => s.NestedPackageId is { } id && lookup(id) is { } p
+            ? $"Paquet : {p.Name} ({p.Steps.Count} étape{(p.Steps.Count > 1 ? "s" : "")})"
+            : "Paquet : (introuvable)",
         _ => (s.Command ?? "").Split('\n')[0].Trim(),
     };
 
@@ -387,6 +392,7 @@ public partial class MainWindow : Window
         StepType.Install => "Installer",
         StepType.Command => "Commande",
         StepType.Pause => "Pause",
+        StepType.Nested => "Paquet imbriqué",
         _ => "PowerShell",
     };
 

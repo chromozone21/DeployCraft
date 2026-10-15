@@ -36,6 +36,14 @@ public class RunnerJobStep
     [JsonPropertyName("includeDirectory")] public bool IncludeDirectory { get; set; }
     /// <summary>Conditions de l'étape : non remplies, l'étape est sautée.</summary>
     [JsonPropertyName("conditions")] public RunnerConditions? Conditions { get; set; }
+    /// <summary>Conditions supplémentaires (paquet imbriqué), vérifiées avant celles de l'étape (null = aucune).</summary>
+    [JsonPropertyName("extraConditions")] public List<RunnerConditionGroup>? ExtraConditions { get; set; }
+}
+
+public class RunnerConditionGroup
+{
+    [JsonPropertyName("label")] public string Label { get; set; } = "";
+    [JsonPropertyName("conditions")] public RunnerConditions? Conditions { get; set; }
 }
 
 /// <summary>Conditions à plat, en chaînes : le runner (.NET Framework) les lit sans dépendre des énumérations du serveur.</summary>

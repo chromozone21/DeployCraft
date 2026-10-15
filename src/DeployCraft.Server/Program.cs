@@ -141,21 +141,27 @@ api.MapGet("/packages/{id:long}", (long id, Store store) =>
 
 api.MapPost("/packages", (Package p, Store store) =>
 {
-    if (Validate(p) is { } error) return Results.BadRequest(new { error });
     p.Id = 0;
+    if (Validate(p, store) is { } error) return Results.BadRequest(new { error });
     return Results.Ok(store.SavePackage(p));
 });
 
 api.MapPut("/packages/{id:long}", (long id, Package p, Store store) =>
 {
     if (store.GetPackage(id) == null) return Results.NotFound();
-    if (Validate(p) is { } error) return Results.BadRequest(new { error });
     p.Id = id;
+    if (Validate(p, store) is { } error) return Results.BadRequest(new { error });
     return Results.Ok(store.SavePackage(p));
 });
 
 api.MapDelete("/packages/{id:long}", (long id, Store store) =>
 {
+    if (Package.UsersOf(store.ListPackages(), id) is { Count: > 0 } users)
+        return Results.BadRequest(new
+        {
+            error = "Ce paquet est utilisé comme paquet imbriqué par : " + string.Join(", ", users.Select(u => $"« {u.Name} »")) +
+                    ". Retirez-le de ces paquets avant de le supprimer.",
+        });
     store.DeletePackage(id);
     return Results.NoContent();
 });
@@ -285,15 +291,28 @@ static string? ValidateSchedule(Schedule s, DeployCredentials cred)
     return null;
 }
 
-static string? Validate(Package p)
+static string? Validate(Package p, Store store)
 {
     // Un client qui envoie null obtient « aucune condition ».
     p.Conditions ??= new();
-    foreach (var step in p.Steps) step.Conditions ??= new();
+    foreach (var step in p.Steps)
+    {
+        step.Conditions ??= new();
+        step.ExtraConditions = null; // posées seulement au lancement, à partir des paquets imbriqués
+    }
     p.SortSteps();
     if (string.IsNullOrWhiteSpace(p.Name)) return "Le paquet doit avoir un nom.";
     if (p.TimeoutMinutes is < 1) return "Options : le délai max doit être d'au moins 1 minute.";
     if (ValidateConditions(p.Conditions) is { } conditionError) return $"Conditions du paquet : {conditionError}";
+    // Paquets imbriqués : choisis, existants, sans boucle ni trop de niveaux (le paquet enregistré compte pour lui-même).
+    try
+    {
+        p.Flatten(id => id == p.Id ? p : store.GetPackage(id));
+    }
+    catch (ArgumentException ex)
+    {
+        return ex.Message;
+    }
     if (p.Offline != null && ValidateOffline(p.Offline) is { } offlineError) return $"Hors ligne : {offlineError}";
     for (var i = 0; i < p.Steps.Count; i++)
     {

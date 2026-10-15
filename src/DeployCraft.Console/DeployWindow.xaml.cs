@@ -130,8 +130,13 @@ public partial class DeployWindow : Window
         Title = _packages.Count == 1 ? $"Déployer une fois — {_packages[0].Package.Name}" : "Déployer une fois";
         PackagesHint.Visibility = _packages.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
 
-        // L'étape de départ porte sur le premier paquet.
+        // L'étape de départ porte sur le premier paquet, paquets imbriqués remplacés par leurs étapes (comme au lancement).
         var first = _packages.FirstOrDefault()?.Package;
+        try
+        {
+            first = first?.Flatten(id => _library.FirstOrDefault(p => p.Id == id));
+        }
+        catch (ArgumentException) { /* paquet imbriqué introuvable : le lancement le signalera */ }
         StepChoices.Clear();
         if (first != null)
             for (var i = 0; i < first.Steps.Count; i++)

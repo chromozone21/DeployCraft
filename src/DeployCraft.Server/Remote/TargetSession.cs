@@ -189,25 +189,33 @@ internal sealed class TargetSession(string computer, DeployCredentials credentia
         package.Steps.OrderBy(s => Package.SectionRank(s.Section)).Skip(Math.Max(0, startStep - 1));
 
     /// <summary>Consignes d'une étape pour le runner (hors fichiers à copier).</summary>
-    internal static RunnerJobStep ToJobStep(PackageStep step, Package package, RunAsMode runAs) => new()
+    internal static RunnerJobStep ToJobStep(PackageStep step, Package package, RunAsMode runAs)
     {
-        Name = string.IsNullOrWhiteSpace(step.Name) ? step.Type.ToString() : step.Name,
-        Section = step.Section.ToString().ToLowerInvariant(),
-        Type = step.Type.ToString().ToLowerInvariant(),
-        Arguments = step.Arguments,
-        Command = step.Command,
-        Seconds = step.Type == StepType.Pause ? step.PauseSeconds : 0,
-        SuccessCodes = ParseCodes(step.SuccessCodes),
-        // Une pause dure ce qu'elle dure : son délai (qui compte dans l'attente du serveur) suit sa durée.
-        TimeoutSeconds = step.Type == StepType.Pause
-            ? Math.Max(1, step.PauseSeconds) + 60
-            : Math.Max(1, step.TimeoutMinutes ?? package.TimeoutMinutes ?? 60) * 60,
-        ContinueOnError = step.ErrorMode == ErrorMode.Continue,
-        StopSuccessOnError = step.ErrorMode == ErrorMode.StopSuccess,
-        Disabled = !step.Enabled,
-        RunAsLoggedOnUser = runAs == RunAsMode.LoggedOnUser,
-        Conditions = RunnerConditions.From(step.Conditions),
-    };
+        if (step.Type == StepType.Nested)
+            throw new DeployException($"Étape « {step.Name} » : paquet imbriqué non remplacé par ses étapes.");
+        return new()
+        {
+            Name = string.IsNullOrWhiteSpace(step.Name) ? step.Type.ToString() : step.Name,
+            Section = step.Section.ToString().ToLowerInvariant(),
+            Type = step.Type.ToString().ToLowerInvariant(),
+            Arguments = step.Arguments,
+            Command = step.Command,
+            Seconds = step.Type == StepType.Pause ? step.PauseSeconds : 0,
+            SuccessCodes = ParseCodes(step.SuccessCodes),
+            // Une pause dure ce qu'elle dure : son délai (qui compte dans l'attente du serveur) suit sa durée.
+            TimeoutSeconds = step.Type == StepType.Pause
+                ? Math.Max(1, step.PauseSeconds) + 60
+                : Math.Max(1, step.TimeoutMinutes ?? package.TimeoutMinutes ?? 60) * 60,
+            ContinueOnError = step.ErrorMode == ErrorMode.Continue,
+            StopSuccessOnError = step.ErrorMode == ErrorMode.StopSuccess,
+            Disabled = !step.Enabled,
+            RunAsLoggedOnUser = runAs == RunAsMode.LoggedOnUser,
+            Conditions = RunnerConditions.From(step.Conditions),
+            ExtraConditions = step.ExtraConditions?
+                .Select(g => new RunnerConditionGroup { Label = g.Label, Conditions = RunnerConditions.From(g.Conditions) })
+                .Where(g => g.Conditions != null).ToList() is { Count: > 0 } extras ? extras : null,
+        };
+    }
 
     /// <summary>Réserve un slot libre grâce à un fichier verrou créé de façon exclusive.</summary>
     private void AcquireSlot()
