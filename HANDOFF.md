@@ -41,8 +41,12 @@ version ni de release côté Cloud) :
 - **A — 2.6 étape activée / désactivée + 2.7 arrêter en succès (#15, PR #16)** : fusionnée. Enchaînement des
   étapes du runner sorti dans `Runner/StepSequence.cs`, testé sous Linux (état `stopped` = échec avec arrêt en
   succès, poste réussi). Pas vu par Prod : le rendu visuel (grisé, thèmes), à regarder à l'installation.
-- **B — 2.25 Pause (#17)** : codée, en relecture. Type `pause` + champ `seconds` ; le runner attend sans lancer
+- **B — 2.25 Pause (#17, PR #18)** : fusionnée. Type `pause` + champ `seconds` ; le runner attend sans lancer
   de processus (`StepSequence.Wait`).
+- **Correctif trouvé par Prod pendant les tests de B** : en relecture. `status.json` remplacé par le runner
+  pendant que le serveur le lit → l'écriture échouait et coupait les étapes restantes. Désormais : réessais
+  d'écriture (runner) et de lecture partagée (serveur), et un enregistrement raté n'arrête plus les étapes.
+  Annulation : l'étape interrompue passe en échec « Annulé. » au lieu de rester « en cours ».
 - C — 2.5 sections avant / principales / après ; D — 2.28 paquet imbriqué ; E — 8.2 variables.
 - Ensuite : 2.8, 2.23, 2.24, 2.26, 2.27, 2.20–2.22 (à tester sur un vrai poste).
 - Import des paquets PDQ Deploy (#14) : en attente, après ces sujets.

@@ -103,7 +103,10 @@ namespace DeployCraft.Runner
                 return (T)new DataContractJsonSerializer(typeof(T)).ReadObject(stream);
         }
 
-        /// <summary>Écriture atomique : le serveur ne lit jamais un fichier à moitié écrit.</summary>
+        /// <summary>
+        /// Écriture atomique : le serveur ne lit jamais un fichier à moitié écrit. Le remplacement échoue tant que
+        /// le serveur lit l'ancien fichier par le partage : on réessaie un peu.
+        /// </summary>
         public static void Write<T>(string path, T value)
         {
             var tmp = path + ".tmp";
@@ -112,8 +115,28 @@ namespace DeployCraft.Runner
                 new DataContractJsonSerializer(typeof(T)).WriteObject(stream, value);
                 File.WriteAllText(tmp, Encoding.UTF8.GetString(stream.ToArray()), new UTF8Encoding(false));
             }
-            if (File.Exists(path)) File.Replace(tmp, path, null);
-            else File.Move(tmp, path);
+            Retry(() =>
+            {
+                if (File.Exists(path)) File.Replace(tmp, path, null);
+                else File.Move(tmp, path);
+            }, 10, System.Threading.Thread.Sleep);
+        }
+
+        /// <summary>Relance <paramref name="action"/> après une IOException (fichier verrouillé), au plus <paramref name="attempts"/> fois.</summary>
+        public static void Retry(Action action, int attempts, Action<int> sleep)
+        {
+            for (var attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    action();
+                    return;
+                }
+                catch (IOException) when (attempt < attempts)
+                {
+                    sleep(150);
+                }
+            }
         }
 
         public static string Now() => DateTime.UtcNow.ToString("o");
