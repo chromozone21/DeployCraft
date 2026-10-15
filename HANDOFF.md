@@ -34,6 +34,17 @@ Gestion du dépôt (15/10) : `main` protégée (PR + CI obligatoires), un sujet 
 **Sujet en cours ailleurs : authentification de l'API du service (PARITE 8.10, issue #5).** Aujourd'hui l'API
 (`localhost:5080`) n'a pas d'authentification : un utilisateur ouvert sur le serveur pourrait lancer un déploiement.
 
+## En cours : options et étapes manquantes (DeployCraft Cloud, relu par DeployCraft Prod)
+
+Programme, une PR par sujet, chacune relue et testée sous Windows par DeployCraft Prod avant fusion (pas de
+version ni de release côté Cloud) :
+- **A — 2.6 étape activée / désactivée + 2.7 arrêter en succès (issue #15)** : codé, en relecture.
+  Enchaînement des étapes du runner sorti dans `Runner/StepSequence.cs`, testé sous Linux (état `stopped` =
+  échec avec arrêt en succès, poste réussi).
+- B — 2.25 Pause ; C — 2.5 sections avant / principales / après ; D — 2.28 paquet imbriqué ; E — 8.2 variables.
+- Ensuite : 2.8, 2.23, 2.24, 2.26, 2.27, 2.20–2.22 (à tester sur un vrai poste).
+- Import des paquets PDQ Deploy (#14) : en attente, après ces sujets.
+
 Autres sujets possibles : réglages hors ligne dans Déployer une fois et les planifications, LAPS (en option),
 listes de cibles.
 

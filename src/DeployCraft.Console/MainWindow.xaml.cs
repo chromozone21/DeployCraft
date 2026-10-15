@@ -357,7 +357,7 @@ public partial class MainWindow : Window
         PackageSubtitle.Text = string.IsNullOrWhiteSpace(p.Description)
             ? $"Paquet · {steps} · modifié le {Ui.LocalTime(p.ModifiedUtc)}"
             : $"{p.Description} · {steps} · modifié le {Ui.LocalTime(p.ModifiedUtc)}";
-        StepsGrid.ItemsSource = p.Steps.Select((s, i) => new StepRow(i + 1, s.Name, StepTypeText(s.Type), s.Type switch
+        StepsGrid.ItemsSource = p.Steps.Select((s, i) => new StepRow(i + 1, StepName(s), StepTypeText(s.Type), s.Type switch
         {
             StepType.Install => $"{s.File} {s.Arguments}".Trim(),
             _ => (s.Command ?? "").Split('\n')[0].Trim(),
@@ -367,6 +367,9 @@ public partial class MainWindow : Window
         PackageSchedulesCount.Text = "";
         SwitchTo(View.Package);
     }
+
+    /// <summary>Titre de l'étape, signalée si elle est désactivée.</summary>
+    public static string StepName(PackageStep s) => s.Enabled ? s.Name : $"{s.Name} (désactivée)";
 
     public static string StepTypeText(StepType t) => t switch
     {

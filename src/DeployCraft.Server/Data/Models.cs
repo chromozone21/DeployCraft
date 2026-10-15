@@ -2,7 +2,8 @@ namespace DeployCraft.Server.Data;
 
 public enum StepType { Install, Command, PowerShell }
 
-public enum ErrorMode { Stop, Continue }
+/// <summary>En cas d'erreur d'une étape : arrêter en échec, continuer, ou arrêter le paquet en comptant le poste réussi.</summary>
+public enum ErrorMode { Stop, Continue, StopSuccess }
 
 /// <summary>Identité sous laquelle les étapes s'exécutent sur le poste.</summary>
 public enum RunAsMode
@@ -21,6 +22,8 @@ public enum CopyMode { Push, Pull }
 public class PackageStep
 {
     public string Name { get; set; } = "";
+    /// <summary>Désactivée : gardée dans le paquet mais jamais exécutée (« Ignoré » dans le suivi).</summary>
+    public bool Enabled { get; set; } = true;
     public StepType Type { get; set; } = StepType.Install;
     /// <summary>Install : chemin du fichier (local ou UNC) côté serveur.</summary>
     public string? File { get; set; }

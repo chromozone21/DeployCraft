@@ -38,8 +38,8 @@ dans la même PR que le code qui la réalise.
 | 2.3 | Options du paquet : délai personnalisé, mode de copie, exécuter en tant que, réessai | ✅ | 0.10.0 : chaque option peut suivre les Préférences ; réessai dans l'onglet Hors ligne |
 | 2.4 | Conditions du paquet : version d'OS + architecture, version PowerShell, utilisateur connecté, fichier, registre | ✅ | 0.10.0 : vérifiées par le runner ; non remplies = poste réussi sans rien exécuter |
 | 2.5 | Sections d'étapes : avant / principales / après | ⬜ | |
-| 2.6 | Par étape : titre, activée / désactivée, codes de succès | 🟡 | Pas d'activation |
-| 2.7 | Par étape : erreur → arrêter en échec / arrêter en succès / continuer | 🟡 | Manque « arrêter en succès » |
+| 2.6 | Par étape : titre, activée / désactivée, codes de succès | ✅ | Étape désactivée : « Ignoré », le paquet continue |
+| 2.7 | Par étape : erreur → arrêter en échec / arrêter en succès / continuer | ✅ | Arrêt en succès : poste compté réussi, étapes suivantes « Ignoré » |
 | 2.8 | Par étape : exécuter en tant que (compte de déploiement / compte de déploiement sur le bureau / système local / utilisateur connecté / hériter du paquet) | ⬜ | Aujourd'hui : toujours système local |
 | 2.9 | Par étape : mêmes conditions qu'au paquet | ✅ | 0.10.0 : non remplies = étape « Ignoré », le paquet continue |
 | 2.10 | Copier / couper / coller / réordonner des étapes, y compris entre paquets | ✅ | 0.10.0 : presse-papiers (Ctrl+X / C / V), barre d'outils et clic droit |

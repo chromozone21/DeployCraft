@@ -50,7 +50,18 @@
 - Condition impossible à vérifier (clé mal écrite…) → étape en échec avec le message.
 
 ### Gestion d'erreur (par étape)
-- Arrêter le déploiement en échec / continuer
+- **Arrêter le déploiement** (par défaut) : les étapes suivantes ne s'exécutent pas, le poste est en échec.
+- **Continuer** : l'étape est notée en échec (le poste aussi), les étapes suivantes s'exécutent.
+- **Arrêter en succès** : les étapes suivantes ne s'exécutent pas et le poste est compté **réussi**. Utile quand
+  l'échec veut dire « rien à faire ici » (ex. un test qui sort en erreur si le logiciel est déjà à jour). L'étape
+  s'affiche « Arrêt en succès » avec son code retour ; les suivantes « Ignoré », avec le numéro de l'étape qui a
+  arrêté le paquet ; la colonne Détail du poste en donne la raison.
+
+### Étape activée / désactivée
+- Une étape décochée « Étape activée » reste dans le paquet mais n'est jamais exécutée : « Ignoré », raison
+  « Étape désactivée. », et le paquet continue. Aucun fichier n'est copié ni vérifié pour elle.
+- Signalée « (désactivée) » et grisée dans la fenêtre paquet et la page du paquet. Clic droit › Activer /
+  Désactiver.
 
 ### Cibles
 - Saisie manuelle de noms de postes, collage, fichier texte
@@ -174,8 +185,8 @@ déploiements possibles en même temps sur un poste.
   - **Conditions** : voir § Conditions.
   - **Options** : exécuter en tant que, mode de copie, délai max ; « Par défaut (valeur) » = Préférences.
   - **Hors ligne** : « Utiliser les réglages des Préférences », sinon réglages propres au paquet.
-- Étape en 3 onglets : **Détails**, **Conditions**, **Options** (délai max, vide = celui du paquet ; en cas
-  d'erreur). La vue d'ensemble des étapes a une colonne Conditions.
+- Étape : titre, case **Étape activée**, puis 3 onglets : **Détails**, **Conditions**, **Options** (délai max,
+  vide = celui du paquet ; en cas d'erreur). La vue d'ensemble des étapes a une colonne Conditions.
 - Héritage des réglages : étape → paquet → Préférences. Au lancement, les valeurs réellement utilisées sont
   figées dans l'historique du déploiement.
 
