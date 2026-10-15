@@ -47,7 +47,10 @@ version ni de release côté Cloud) :
   pendant que le serveur le lit → l'écriture échouait et coupait les étapes restantes. Désormais : réessais
   d'écriture (runner) et de lecture partagée (serveur), et un enregistrement raté n'arrête plus les étapes.
   Annulation : l'étape interrompue passe en échec « Annulé. » au lieu de rester « en cours ».
-- C — 2.5 sections avant / principales / après ; D — 2.28 paquet imbriqué ; E — 8.2 variables.
+- **C — 2.5 sections avant / principales / après** : codée, en relecture. Règle (la nôtre, à faire confirmer par
+  la session du mainteneur qui observe l'outil de référence) dans `SPEC.md` § Sections. Les étapes sont rangées
+  par section à l'enregistrement (`Package.SortSteps`).
+- D — 2.28 paquet imbriqué ; E — 8.2 variables.
 - Ensuite : 2.8, 2.23, 2.24, 2.26, 2.27, 2.20–2.22 (à tester sur un vrai poste).
 - Import des paquets PDQ Deploy (#14) : en attente, après ces sujets.
 

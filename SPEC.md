@@ -57,6 +57,22 @@
   s'affiche « Arrêt en succès » avec son code retour ; les suivantes « Ignoré », avec le numéro de l'étape qui a
   arrêté le paquet ; la colonne Détail du poste en donne la raison.
 
+### Sections d'étapes : Avant / Principales / Après
+Règle propre à DeployCraft (elle n'est pas reprise d'un autre outil) :
+- Chaque étape appartient à une section, **Principales** par défaut (les paquets existants ne changent pas).
+  Ordre d'exécution : Avant, Principales, puis Après ; à l'intérieur d'une section, l'ordre de la liste.
+- Un échec (mode « Arrêter le déploiement ») ou un « Arrêter en succès » dans Avant ou Principales saute le reste
+  de ces deux sections ; **Après s'exécute quand même**, comme un nettoyage. Dans Après, le mode d'erreur de
+  chaque étape s'applique à l'intérieur de la section (un arrêt saute la suite d'Après).
+- Résultat du poste : un échec dans Avant / Principales le laisse en échec même si Après réussit ; un échec dans
+  Après le met en échec ; un arrêt en succès suivi d'un Après réussi donne un poste réussi.
+- Annulation : rien ne s'exécute, Après compris. Conditions du paquet non remplies : tout est sauté, Après compris.
+- « Reprendre à l'étape N » / démarrer à l'étape N : les étapes à partir de N, dans l'ordre des sections ; Après
+  s'exécute donc toujours si N est dans Avant ou Principales.
+- Fenêtre paquet : choix **Section** sous le titre de l'étape ; les étapes Avant / Après sont préfixées
+  « Avant · » / « Après · » dans les listes. Monter / descendre restent dans la section ; une étape ajoutée,
+  dupliquée ou collée prend la section de l'étape sélectionnée.
+
 ### Étape activée / désactivée
 - Une étape décochée « Étape activée » reste dans le paquet mais n'est jamais exécutée : « Ignoré », raison
   « Étape désactivée. », et le paquet continue. Aucun fichier n'est copié ni vérifié pour elle.

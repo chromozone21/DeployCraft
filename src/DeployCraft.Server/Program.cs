@@ -290,6 +290,7 @@ static string? Validate(Package p)
     // Un client qui envoie null obtient « aucune condition ».
     p.Conditions ??= new();
     foreach (var step in p.Steps) step.Conditions ??= new();
+    p.SortSteps();
     if (string.IsNullOrWhiteSpace(p.Name)) return "Le paquet doit avoir un nom.";
     if (p.TimeoutMinutes is < 1) return "Options : le délai max doit être d'au moins 1 minute.";
     if (ValidateConditions(p.Conditions) is { } conditionError) return $"Conditions du paquet : {conditionError}";
